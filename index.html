@@ -35,7 +35,7 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { getTenantInfo, DEFAULT_CATEGORIES, formatCurrency, EmptyState, LoadingSpinner, Icons } = window.MenuCraftUtils;
+        const { getRestaurantInfo, DEFAULT_CATEGORIES, formatCurrency, EmptyState, LoadingSpinner, Icons } = window.MenuCraftUtils;
         const { CheckoutForm, CartItem, MenuItemCard, CategoryNavigation } = window.MenuCraftComponents;
 
         // Customer Menu Component
@@ -49,12 +49,13 @@
             const [buttonStates, setButtonStates] = useState({});
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
-const [categories, setCategories] = useState(DEFAULT_CATEGORIES || []);
+            const [categories, setCategories] = useState(DEFAULT_CATEGORIES || []);
 
             // Initialize
             useEffect(() => {
                 console.log('Initializing CustomerMenu...');
-                const restaurant = getRestaurantInfo();
+                const restaurant = getRestaurantInfo(); 
+                setTenantInfo(restaurant);
                 setFirebaseService(new window.FirebaseService());
             }, []);
 
@@ -228,11 +229,11 @@ const [categories, setCategories] = useState(DEFAULT_CATEGORIES || []);
                             // Menu Items Grid
                             getFilteredItems().length === 0 ? 
                                 React.createElement(EmptyState, {
-    title: 'No Items Available',
-    message: selectedCategory === 'all' ? 
-        'This restaurant hasn\'t added any menu items yet. Try adding items from the admin panel.' :
-        `No items found in ${categories.find(c => c.id === selectedCategory)?.name} category.`,
-    actionText: selectedCategory !== 'all' ? 'View All Items' : 'Go to Admin Panel',
+                                    title: 'No Items Available',
+                                    message: selectedCategory === 'all' ? 
+                                        'This restaurant hasn\'t added any menu items yet. Try adding items from the admin panel.' :
+                                        `No items found in ${categories.find(c => c.id === selectedCategory)?.name} category.`,
+                                    actionText: selectedCategory !== 'all' ? 'View All Items' : 'Go to Admin Panel',
                                     onAction: selectedCategory !== 'all' ? 
                                         () => setSelectedCategory('all') : 
                                         () => window.open('admin.html', '_blank')

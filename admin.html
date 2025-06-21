@@ -33,13 +33,13 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { getTenantInfo, DEFAULT_CATEGORIES, formatCurrency, formatDate, EmptyState, LoadingSpinner, ErrorMessage, Icons } = window.MenuCraftUtils;
+        const { getRestaurantInfo, DEFAULT_CATEGORIES, formatCurrency, formatDate, EmptyState, LoadingSpinner, ErrorMessage, Icons } = window.MenuCraftUtils;
         const { MenuItemForm } = window.MenuCraftComponents;
         const CategoryManagement = window.CategoryManagement;
 
         // Admin Panel Component
         const AdminPanel = () => {
-            const [tenantInfo, setTenantInfo] = useState(null);
+            const [restaurantInfo, setRestaurantInfo] = useState(null);
             const [firebaseService, setFirebaseService] = useState(null);
             const [menuItems, setMenuItems] = useState([]);
             const [orders, setOrders] = useState([]);
@@ -52,9 +52,9 @@
 
             // Initialize
             useEffect(() => {
-                const tenant = getTenantInfo();
-                setTenantInfo(tenant);
-                setFirebaseService(new window.FirebaseService(tenant.tenantId));
+                const restaurant = getRestaurantInfo();
+                setRestaurantInfo(restaurant);
+                setFirebaseService(new window.FirebaseService());
             }, []);
 
             // Load data
@@ -161,7 +161,7 @@
                             React.createElement('div', null,
                                 React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'MenuCraft Admin'),
                                 React.createElement('p', { className: 'text-gray-600' }, 
-                                    `Managing: ${tenantInfo?.displayName || 'Restaurant'}`
+                                    `Managing: ${restaurantInfo?.displayName || 'Restaurant'}`
                                 )
                             ),
                             React.createElement('div', { className: 'flex gap-3' },

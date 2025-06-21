@@ -5,13 +5,17 @@ if (typeof window.MenuCraftUtils !== 'undefined') {
     console.log('MenuCraftUtils already loaded, skipping...');
 } else {
 
-// Tenant detection utility
-const getRestaurantInfo = () => {
+// Tenant detection utility - Fixed function name
+const getTenantInfo = () => {
     return {
-        name: 'Demo Restaurant', // Change this for each client
+        tenantId: 'demo-restaurant',
+        name: 'Demo Restaurant',
         displayName: 'Demo Restaurant'
     };
 };
+
+// Keep backward compatibility
+const getRestaurantInfo = getTenantInfo;
 
 // Simple icon components (React elements)
 const Icons = {
@@ -197,7 +201,8 @@ const getFromLocalStorage = (key, defaultValue = null) => {
 
 // Export utilities
 window.MenuCraftUtils = {
-    getRestaurantInfo,
+    getTenantInfo,
+    getRestaurantInfo, // Keep for backward compatibility
     Icons,
     formatCurrency,
     formatDate,
