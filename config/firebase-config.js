@@ -9,9 +9,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
 // Export Firebase services
 window.db = firebase.firestore();
 window.auth = firebase.auth();
-window.storage = firebase.storage();

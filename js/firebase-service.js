@@ -1,4 +1,11 @@
 // Firebase Service Layer for MenuCraft
+
+// Prevent duplicate loading
+if (typeof window.FirebaseService !== 'undefined') {
+    console.log('FirebaseService already loaded, skipping...');
+} else {
+
+// Firebase service layer
 class FirebaseService {
     constructor(tenantId) {
         this.tenantId = tenantId;
@@ -7,7 +14,188 @@ class FirebaseService {
         this.storage = window.storage;
     }
 
-    // ==================== MENU ITEMS ====================
+    // ==================== CATEGORIES ====================
+    
+    /**
+     * Get categories for the tenant
+     * @returns {Promise<Array>} Array of categories
+     */
+    async getCategories() {
+        try {
+            const snapshot = await this.db.collection(`tenants/${this.tenantId}/categories`)
+                .orderBy('order', 'asc')
+                .get();
+            
+            const categories = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            // If no categories exist, create default ones
+            if (categories.length === 0) {
+                return await this.initializeDefaultCategories();
+            }
+            
+            return categories;
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            // Return default categories as fallback
+            return this.getDefaultCategories();
+        }
+    }
+
+    /**
+     * Add a new category
+     * @param {Object} category - Category data
+     * @returns {Promise<Object>} Created category
+     */
+    async addCategory(category) {
+        try {
+            const categoryData = {
+                name: category.name.trim(),
+                icon: category.icon || '🍽️',
+                color: category.color || '#f97316',
+                order: category.order || 0,
+                isActive: category.isActive !== undefined ? Boolean(category.isActive) : true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            const docRef = await this.db.collection(`tenants/${this.tenantId}/categories`).add(categoryData);
+            
+            return {
+                id: docRef.id,
+                ...categoryData,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+        } catch (error) {
+            console.error('Error adding category:', error);
+            throw new Error('Failed to add category. Please try again.');
+        }
+    }
+
+    /**
+     * Update a category
+     * @param {string} id - Category ID
+     * @param {Object} updates - Fields to update
+     * @returns {Promise<void>}
+     */
+    async updateCategory(id, updates) {
+        try {
+            const updateData = {
+                ...updates,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await this.db.collection(`tenants/${this.tenantId}/categories`).doc(id).update(updateData);
+        } catch (error) {
+            console.error('Error updating category:', error);
+            throw new Error('Failed to update category. Please try again.');
+        }
+    }
+
+    /**
+     * Delete a category
+     * @param {string} id - Category ID
+     * @returns {Promise<void>}
+     */
+    async deleteCategory(id) {
+        try {
+            // Check if any menu items use this category
+            const itemsSnapshot = await this.db.collection(`tenants/${this.tenantId}/menuItems`)
+                .where('category', '==', id)
+                .limit(1)
+                .get();
+
+            if (!itemsSnapshot.empty) {
+                throw new Error('Cannot delete category that contains menu items. Please move or delete items first.');
+            }
+
+            await this.db.collection(`tenants/${this.tenantId}/categories`).doc(id).delete();
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Reorder categories
+     * @param {Array} categoryIds - Array of category IDs in new order
+     * @returns {Promise<void>}
+     */
+    async reorderCategories(categoryIds) {
+        try {
+            const batch = this.db.batch();
+
+            categoryIds.forEach((categoryId, index) => {
+                const categoryRef = this.db.collection(`tenants/${this.tenantId}/categories`).doc(categoryId);
+                batch.update(categoryRef, { 
+                    order: index,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+        } catch (error) {
+            console.error('Error reordering categories:', error);
+            throw new Error('Failed to reorder categories. Please try again.');
+        }
+    }
+
+    /**
+     * Initialize default categories for new tenants
+     * @returns {Promise<Array>} Array of created categories
+     */
+    async initializeDefaultCategories() {
+        try {
+            const defaultCategories = this.getDefaultCategories();
+            const createdCategories = [];
+
+            for (let i = 0; i < defaultCategories.length; i++) {
+                const category = defaultCategories[i];
+                const categoryData = {
+                    ...category,
+                    order: i,
+                    isActive: true,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                const docRef = await this.db.collection(`tenants/${this.tenantId}/categories`).add(categoryData);
+                createdCategories.push({
+                    id: docRef.id,
+                    ...categoryData,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            }
+
+            return createdCategories;
+        } catch (error) {
+            console.error('Error initializing default categories:', error);
+            return this.getDefaultCategories();
+        }
+    }
+
+    /**
+     * Get default categories
+     * @returns {Array} Default categories
+     */
+    getDefaultCategories() {
+        return [
+            { id: 'appetizers', name: 'Appetizers', icon: '🥗', color: '#10b981' },
+            { id: 'soups', name: 'Soups', icon: '🍲', color: '#f59e0b' },
+            { id: 'salads', name: 'Salads', icon: '🥙', color: '#22c55e' },
+            { id: 'pasta', name: 'Pasta', icon: '🍝', color: '#eab308' },
+            { id: 'pizza', name: 'Pizza', icon: '🍕', color: '#ef4444' },
+            { id: 'seafood', name: 'Seafood', icon: '🦞', color: '#3b82f6' },
+            { id: 'meat', name: 'Meat & Poultry', icon: '🥩', color: '#dc2626' },
+            { id: 'vegetarian', name: 'Vegetarian', icon: '🥕', color: '#16a34a' },
+            { id: 'desserts', name: 'Desserts', icon: '🍰', color: '#ec4899' },
+            { id: 'beverages', name: 'Beverages', icon: '🥤', color: '#06b6d4' }
+        ];
+    }
     
     /**
      * Get all menu items for the tenant
@@ -417,3 +605,5 @@ class FirebaseService {
 
 // Export FirebaseService
 window.FirebaseService = FirebaseService;
+
+} // End duplicate loading check

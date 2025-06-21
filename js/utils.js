@@ -1,5 +1,10 @@
 // Utility functions for MenuCraft
 
+// Prevent duplicate loading
+if (typeof window.MenuCraftUtils !== 'undefined') {
+    console.log('MenuCraftUtils already loaded, skipping...');
+} else {
+
 // Tenant detection utility
 const getTenantInfo = () => {
     const hostname = window.location.hostname;
@@ -98,8 +103,8 @@ const formatDate = (date) => {
     });
 };
 
-// Category definitions
-const CATEGORIES = [
+// Category definitions - now dynamic, loaded from Firebase
+const DEFAULT_CATEGORIES = [
     { id: 'all', name: 'All Items', icon: '🍽️' },
     { id: 'appetizers', name: 'Appetizers', icon: '🥗' },
     { id: 'soups', name: 'Soups', icon: '🍲' },
@@ -112,6 +117,21 @@ const CATEGORIES = [
     { id: 'desserts', name: 'Desserts', icon: '🍰' },
     { id: 'beverages', name: 'Beverages', icon: '🥤' }
 ];
+
+// Load categories from Firebase
+const loadCategories = async (firebaseService) => {
+    try {
+        const categories = await firebaseService.getCategories();
+        // Add "All Items" category at the beginning
+        return [
+            { id: 'all', name: 'All Items', icon: '🍽️', order: -1 },
+            ...categories
+        ];
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        return DEFAULT_CATEGORIES;
+    }
+};
 
 // Loading spinner component
 const LoadingSpinner = ({ size = 24 }) => {
@@ -205,7 +225,8 @@ window.MenuCraftUtils = {
     Icons,
     formatCurrency,
     formatDate,
-    CATEGORIES,
+    DEFAULT_CATEGORIES,
+    loadCategories,
     LoadingSpinner,
     ErrorMessage,
     EmptyState,
@@ -215,3 +236,5 @@ window.MenuCraftUtils = {
     saveToLocalStorage,
     getFromLocalStorage
 };
+
+} // End duplicate loading check

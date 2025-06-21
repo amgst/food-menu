@@ -14,28 +14,24 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
-    <style>
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div class="min-h-screen flex items-center justify-center bg-gray-50">
+            <div class="text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading MenuCraft...</p>
+            </div>
+        </div>
+    </div>
     
-    <!-- Load dependencies -->
-    <script src="config/firebase-config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/firebase-service.js"></script>
-    <script src="js/components/shared-components.js"></script>
+    <!-- Load dependencies in correct order -->
+    <script src="config/firebase-config.js?v=2"></script>
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/firebase-service.js?v=2"></script>
+    <script src="js/components/shared-components.js?v=2"></script>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -56,7 +52,9 @@
 
             // Initialize
             useEffect(() => {
+                console.log('Initializing CustomerMenu...');
                 const tenant = getTenantInfo();
+                console.log('Tenant info:', tenant);
                 setTenantInfo(tenant);
                 setFirebaseService(new window.FirebaseService(tenant.tenantId));
             }, []);
@@ -64,6 +62,7 @@
             // Load menu items
             useEffect(() => {
                 if (firebaseService) {
+                    console.log('Firebase service ready, loading menu items...');
                     loadMenuItems();
                 }
             }, [firebaseService]);
@@ -72,7 +71,9 @@
                 try {
                     setLoading(true);
                     setError(null);
+                    console.log('Loading menu items from Firebase...');
                     const items = await firebaseService.getMenuItems();
+                    console.log('Loaded items:', items);
                     setMenuItems(items);
                 } catch (error) {
                     console.error('Error loading menu items:', error);
@@ -230,10 +231,12 @@
                                 React.createElement(EmptyState, {
                                     title: 'No Items Available',
                                     message: selectedCategory === 'all' ? 
-                                        'This restaurant hasn\'t added any menu items yet.' :
+                                        'This restaurant hasn\'t added any menu items yet. Try adding items from the admin panel.' :
                                         `No items found in ${CATEGORIES.find(c => c.id === selectedCategory)?.name} category.`,
-                                    actionText: selectedCategory !== 'all' ? 'View All Items' : null,
-                                    onAction: selectedCategory !== 'all' ? () => setSelectedCategory('all') : null
+                                    actionText: selectedCategory !== 'all' ? 'View All Items' : 'Go to Admin Panel',
+                                    onAction: selectedCategory !== 'all' ? 
+                                        () => setSelectedCategory('all') : 
+                                        () => window.open('admin.html', '_blank')
                                 }) :
                                 React.createElement('div', { 
                                     className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4' 
@@ -281,4 +284,89 @@
                                                         key: item.id,
                                                         item,
                                                         onUpdateQuantity: updateQuantity,
-                                                        on
+                                                        onRemove: removeFromCart
+                                                    })
+                                                )
+                                            ),
+
+                                            React.createElement('div', { className: 'border-t pt-4' },
+                                                React.createElement('div', { 
+                                                    className: 'flex justify-between items-center text-lg font-semibold mb-4' 
+                                                },
+                                                    React.createElement('span', null, 'Total:'),
+                                                    React.createElement('span', { 
+                                                        className: 'text-orange-600' 
+                                                    }, formatCurrency(getCartTotal()))
+                                                ),
+                                                
+                                                React.createElement('button', {
+                                                    onClick: () => setShowCheckout(true),
+                                                    className: 'w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors font-medium'
+                                                }, 'Proceed to Checkout')
+                                            )
+                                        )
+                                )
+                            )
+                        )
+                    )
+                ),
+
+                // Admin Access Link (for testing)
+                React.createElement('div', { 
+                    className: 'fixed bottom-4 right-4 z-50' 
+                },
+                    React.createElement('a', {
+                        href: 'admin.html',
+                        target: '_blank',
+                        className: 'bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition-colors text-sm'
+                    }, '⚙️ Admin Panel')
+                ),
+
+                // Checkout Modal
+                showCheckout && React.createElement(CheckoutForm, {
+                    cart: cart,
+                    total: getCartTotal(),
+                    onClose: () => setShowCheckout(false),
+                    onSubmit: handleCheckout
+                })
+            );
+        };
+
+        // Wait for all dependencies to load
+        window.addEventListener('load', () => {
+            console.log('Window loaded, checking dependencies...');
+            
+            // Check if all dependencies are loaded
+            if (window.MenuCraftUtils && window.MenuCraftComponents && window.FirebaseService) {
+                console.log('All dependencies loaded, rendering app...');
+                ReactDOM.render(React.createElement(CustomerMenu), document.getElementById('root'));
+            } else {
+                console.error('Missing dependencies:', {
+                    MenuCraftUtils: !!window.MenuCraftUtils,
+                    MenuCraftComponents: !!window.MenuCraftComponents,
+                    FirebaseService: !!window.FirebaseService
+                });
+                
+                // Show error message
+                document.getElementById('root').innerHTML = `
+                    <div class="min-h-screen flex items-center justify-center bg-red-50">
+                        <div class="text-center p-8">
+                            <h1 class="text-2xl font-bold text-red-800 mb-4">Loading Error</h1>
+                            <p class="text-red-600 mb-4">Failed to load required files. Please check:</p>
+                            <ul class="text-left text-red-600 space-y-1">
+                                <li>• config/firebase-config.js</li>
+                                <li>• js/utils.js</li>
+                                <li>• js/firebase-service.js</li>
+                                <li>• js/components/shared-components.js</li>
+                            </ul>
+                            <button onclick="location.reload()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                                Reload Page
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
