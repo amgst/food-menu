@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bella Vista Restaurant Menu</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+    <style>
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { ChevronLeft, ChevronRight, Plus, Minus, Trash2, Check } = lucideReact;
+
+        // Database simulation
+        class RestaurantDB {
+          constructor() {
+            this.data = {
+              menuItems: new Map(),
+              orders: new Map()
+            };
+            this.loadFromStorage();
+          }
+
+          createMenuItem(item) {
+            this.data.menuItems.set(item.id, { ...item, createdAt: new Date().toISOString() });
+            this.saveToStorage();
+            return true;
+          }
+
+          getMenuItems(category = null) {
+            const items = Array.from(this.data.menuItems.values());
+            return category ? items.filter(item => item.category === category) : items;
+          }
+
+          createOrder(order) {
+            this.data.orders.set(order.id, order);
+            this.saveToStorage();
+            return true;
+          }
+
+          saveToStorage() {
+            try {
+              const serialized = {
+                menuItems: Array.from(this.data.menuItems.entries()),
+                orders: Array.from(this.data.orders.entries())
+              };
+              localStorage.setItem('restaurantDB', JSON.stringify(serialized));
+            } catch (error) {
+              console.error('Failed to save to storage:', error);
+            }
+          }
+
+          loadFromStorage() {
+            try {
+              const stored = localStorage.getItem('restaurantDB');
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                this.data.menuItems = new Map(parsed.menuItems || []);
+                this.data.orders = new Map(parsed.orders || []);
+              } else {
+                this.initializeDefaultData();
+              }
+            } catch (error) {
+              console.error('Failed to load from storage:', error);
+              this.initializeDefaultData();
+            }
+          }
+
+          initializeDefaultData() {
+            const sampleItems = [
+              // Appetizers
+              { id: 1, name: "Bruschetta Trio", description: "Three varieties of toasted bread with fresh toppings", price: 12, category: "appetizers", vegetarian: true },
+              { id: 2, name: "Calamari Rings", description: "Crispy fried squid with marinara sauce", price: 14, category: "appetizers" },
+              { id: 3, name: "Buffalo Wings", description: "Spicy chicken wings with blue cheese dip", price: 16, category: "appetizers", spicy: true },
+              { id: 4, name: "Stuffed Mushrooms", description: "Button mushrooms filled with herbs and cheese", price: 13, category: "appetizers", vegetarian: true },
+              { id: 5, name: "Shrimp Cocktail", description: "Jumbo shrimp with cocktail sauce", price: 18, category: "appetizers" },
+
+              // Soups
+              { id: 11, name: "Tomato Basil Soup", description: "Classic tomato soup with fresh basil", price: 9, category: "soups", vegetarian: true },
+              { id: 12, name: "Chicken Noodle Soup", description: "Homestyle chicken soup with egg noodles", price: 10, category: "soups" },
+              { id: 13, name: "French Onion Soup", description: "Caramelized onions with Gruyère cheese", price: 12, category: "soups", vegetarian: true },
+              { id: 14, name: "Clam Chowder", description: "New England style clam chowder", price: 13, category: "soups" },
+              { id: 15, name: "Minestrone", description: "Italian vegetable soup with pasta", price: 11, category: "soups", vegetarian: true },
+
+              // Salads
+              { id: 21, name: "Caesar Salad", description: "Romaine lettuce with Caesar dressing and croutons", price: 14, category: "salads", vegetarian: true },
+              { id: 22, name: "Greek Salad", description: "Mixed greens with feta, olives, and cucumber", price: 15, category: "salads", vegetarian: true },
+              { id: 23, name: "Cobb Salad", description: "Mixed greens with bacon, chicken, and blue cheese", price: 18, category: "salads" },
+              { id: 24, name: "Caprese Salad", description: "Fresh mozzarella, tomatoes, and basil", price: 16, category: "salads", vegetarian: true },
+              { id: 25, name: "Quinoa Salad", description: "Quinoa with roasted vegetables and vinaigrette", price: 17, category: "salads", vegetarian: true },
+
+              // Pasta
+              { id: 31, name: "Spaghetti Carbonara", description: "Pasta with eggs, cheese, and pancetta", price: 18, category: "pasta" },
+              { id: 32, name: "Fettuccine Alfredo", description: "Creamy pasta with parmesan cheese", price: 16, category: "pasta", vegetarian: true },
+              { id: 33, name: "Penne Arrabbiata", description: "Spicy tomato sauce with garlic and chili", price: 15, category: "pasta", spicy: true, vegetarian: true },
+              { id: 34, name: "Lasagna Bolognese", description: "Layered pasta with meat sauce and cheese", price: 20, category: "pasta" },
+              { id: 35, name: "Linguine alle Vongole", description: "Pasta with clams in white wine sauce", price: 22, category: "pasta" },
+
+              // Pizza
+              { id: 41, name: "Margherita Pizza", description: "Classic pizza with tomato, mozzarella, and basil", price: 16, category: "pizza", vegetarian: true },
+              { id: 42, name: "Pepperoni Pizza", description: "Traditional pizza with pepperoni and cheese", price: 18, category: "pizza" },
+              { id: 43, name: "Hawaiian Pizza", description: "Ham and pineapple with mozzarella", price: 19, category: "pizza" },
+              { id: 44, name: "Quattro Stagioni", description: "Four seasons pizza with varied toppings", price: 22, category: "pizza" },
+              { id: 45, name: "Meat Lovers Pizza", description: "Loaded with pepperoni, sausage, and ham", price: 24, category: "pizza" },
+
+              // Seafood
+              { id: 51, name: "Grilled Salmon", description: "Atlantic salmon with lemon herb butter", price: 28, category: "seafood" },
+              { id: 52, name: "Lobster Thermidor", description: "Lobster in creamy cheese sauce", price: 45, category: "seafood" },
+              { id: 53, name: "Fish and Chips", description: "Beer-battered cod with fries", price: 22, category: "seafood" },
+              { id: 54, name: "Paella Valenciana", description: "Spanish rice with seafood and saffron", price: 32, category: "seafood" },
+              { id: 55, name: "Grilled Octopus", description: "Chargrilled octopus with olive oil and herbs", price: 26, category: "seafood" },
+
+              // Meat & Poultry
+              { id: 61, name: "Ribeye Steak", description: "12oz grilled ribeye with garlic butter", price: 35, category: "meat" },
+              { id: 62, name: "Chicken Parmesan", description: "Breaded chicken with marinara and cheese", price: 22, category: "meat" },
+              { id: 63, name: "Lamb Chops", description: "Grilled lamb chops with rosemary", price: 32, category: "meat" },
+              { id: 64, name: "Pork Tenderloin", description: "Roasted pork with apple stuffing", price: 26, category: "meat" },
+              { id: 65, name: "Duck Confit", description: "Slow-cooked duck leg with orange sauce", price: 29, category: "meat" },
+
+              // Vegetarian
+              { id: 71, name: "Eggplant Parmesan", description: "Breaded eggplant with marinara and mozzarella", price: 18, category: "vegetarian", vegetarian: true },
+              { id: 72, name: "Stuffed Bell Peppers", description: "Bell peppers filled with quinoa, vegetables, and cheese", price: 16, category: "vegetarian", vegetarian: true },
+              { id: 73, name: "Vegetable Curry", description: "Mixed vegetables in coconut curry sauce with rice", price: 15, category: "vegetarian", vegetarian: true, spicy: true },
+              { id: 74, name: "Portobello Burger", description: "Grilled portobello mushroom with avocado and sprouts", price: 14, category: "vegetarian", vegetarian: true },
+              { id: 75, name: "Ratatouille", description: "Traditional French vegetable stew with herbs", price: 16, category: "vegetarian", vegetarian: true },
+
+              // Desserts
+              { id: 81, name: "Tiramisu", description: "Classic Italian dessert with coffee and mascarpone", price: 9, category: "desserts", vegetarian: true },
+              { id: 82, name: "Chocolate Lava Cake", description: "Warm chocolate cake with molten center", price: 10, category: "desserts", vegetarian: true },
+              { id: 83, name: "Crème Brûlée", description: "Vanilla custard with caramelized sugar", price: 8, category: "desserts", vegetarian: true },
+              { id: 84, name: "New York Cheesecake", description: "Rich cheesecake with berry compote", price: 9, category: "desserts", vegetarian: true },
+              { id: 85, name: "Gelato Trio", description: "Three scoops of artisanal gelato", price: 7, category: "desserts", vegetarian: true },
+
+              // Beverages
+              { id: 91, name: "Espresso", description: "Rich Italian coffee", price: 3, category: "beverages", vegetarian: true },
+              { id: 92, name: "Cappuccino", description: "Espresso with steamed milk foam", price: 4, category: "beverages", vegetarian: true },
+              { id: 93, name: "Fresh Orange Juice", description: "Freshly squeezed orange juice", price: 5, category: "beverages", vegetarian: true },
+              { id: 94, name: "Italian Soda", description: "Sparkling water with flavored syrup", price: 4, category: "beverages", vegetarian: true },
+              { id: 95, name: "House Wine", description: "Red or white wine by the glass", price: 8, category: "beverages", vegetarian: true }
+            ];
+
+            sampleItems.forEach(item => this.createMenuItem(item));
+          }
+        }
+
+        const RestaurantMenu = () => {
+          const [db] = useState(() => new RestaurantDB());
+          const [selectedCategory, setSelectedCategory] = useState('all');
+          const [cart, setCart] = useState([]);
+          const [showCheckout, setShowCheckout] = useState(false);
+          const [menuItems, setMenuItems] = useState([]);
+          const [buttonStates, setButtonStates] = useState({});
+
+          const categories = [
+            { id: 'all', name: 'All Items', icon: '🍽️' },
+            { id: 'appetizers', name: 'Appetizers', icon: '🥗' },
+            { id: 'soups', name: 'Soups', icon: '🍲' },
+            { id: 'salads', name: 'Salads', icon: '🥙' },
+            { id: 'pasta', name: 'Pasta', icon: '🍝' },
+            { id: 'pizza', name: 'Pizza', icon: '🍕' },
+            { id: 'seafood', name: 'Seafood', icon: '🦞' },
+            { id: 'meat', name: 'Meat & Poultry', icon: '🥩' },
+            { id: 'vegetarian', name: 'Vegetarian', icon: '🥕' },
+            { id: 'desserts', name: 'Desserts', icon: '🍰' },
+            { id: 'beverages', name: 'Beverages', icon: '🥤' }
+          ];
+
+          useEffect(() => {
+            setMenuItems(db.getMenuItems());
+          }, [db]);
+
+          const addToCart = async (item) => {
+            setButtonStates(prev => ({ ...prev, [item.id]: 'adding' }));
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const existingItem = cart.find(cartItem => cartItem.id === item.id);
+            if (existingItem) {
+              setCart(cart.map(cartItem => 
+                cartItem.id === item.id 
+                  ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                  : cartItem
+              ));
+            } else {
+              setCart([...cart, { ...item, quantity: 1 }]);
+            }
+
+            setButtonStates(prev => ({ ...prev, [item.id]: 'added' }));
+
+            setTimeout(() => {
+              setButtonStates(prev => ({ ...prev, [item.id]: 'normal' }));
+            }, 2000);
+          };
+
+          const updateQuantity = (id, change) => {
+            setCart(cart.map(item => {
+              if (item.id === id) {
+                const newQuantity = item.quantity + change;
+                return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+              }
+              return item;
+            }).filter(Boolean));
+          };
+
+          const removeFromCart = (id) => {
+            setCart(cart.filter(item => item.id !== id));
+          };
+
+          const getCartTotal = () => {
+            return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+          };
+
+          const getCartItemCount = () => {
+            return cart.reduce((total, item) => total + item.quantity, 0);
+          };
+
+          const getFilteredItems = () => {
+            if (selectedCategory === 'all') {
+              return menuItems;
+            }
+            return menuItems.filter(item => item.category === selectedCategory);
+          };
+
+          const scrollCategories = (direction) => {
+            const container = document.getElementById('categories-container');
+            const scrollAmount = 200;
+            if (direction === 'left') {
+              container.scrollLeft -= scrollAmount;
+            } else {
+              container.scrollLeft += scrollAmount;
+            }
+          };
+
+          const getButtonText = (item) => {
+            const state = buttonStates[item.id] || 'normal';
+            const cartItem = cart.find(cartItem => cartItem.id === item.id);
+            
+            switch (state) {
+              case 'adding':
+                return 'Adding...';
+              case 'added':
+                return `Added ${cartItem?.quantity || 1}`;
+              default:
+                return cartItem ? `Add More (${cartItem.quantity})` : 'Add to Cart';
+            }
+          };
+
+          const getButtonStyle = (item) => {
+            const state = buttonStates[item.id] || 'normal';
+            const cartItem = cart.find(cartItem => cartItem.id === item.id);
+            
+            if (state === 'adding') {
+              return 'bg-yellow-500 text-white';
+            } else if (state === 'added') {
+              return 'bg-green-500 text-white';
+            } else if (cartItem) {
+              return 'bg-blue-500 text-white hover:bg-blue-600';
+            }
+            return 'bg-orange-500 text-white hover:bg-orange-600';
+          };
+
+          const handleCheckout = (customerInfo) => {
+            const order = {
+              id: `order_${Date.now()}`,
+              customerInfo,
+              items: cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+              })),
+              total: getCartTotal(),
+              timestamp: new Date().toISOString(),
+              status: 'pending'
+            };
+
+            if (db.createOrder(order)) {
+              alert('Order placed successfully! Order ID: ' + order.id);
+              setCart([]);
+              setShowCheckout(false);
+            }
+          };
+
+          return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+            // Header
+            React.createElement('div', { className: 'bg-white shadow-sm' },
+              React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
+                React.createElement('div', { className: 'text-center' },
+                  React.createElement('h1', { className: 'text-4xl md:text-5xl font-bold text-gray-800 mb-3' }, 'Bella Vista'),
+                  React.createElement('div', { className: 'w-20 h-1 bg-orange-500 mx-auto mb-4' }),
+                  React.createElement('p', { className: 'text-gray-600 max-w-2xl mx-auto text-sm md:text-base' },
+                    'Experience culinary excellence with our carefully crafted menu featuring the finest ingredients and authentic flavors from around the world.'
+                  )
+                )
+              )
+            ),
+
+            // Category Navigation
+            React.createElement('div', { className: 'bg-white border-b' },
+              React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-4' },
+                React.createElement('h2', { className: 'text-xl md:text-2xl font-semibold text-center text-gray-800 mb-6' }, 'Menu Categories'),
+                React.createElement('div', { className: 'relative' },
+                  React.createElement('button', {
+                    onClick: () => scrollCategories('left'),
+                    className: 'absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50'
+                  }, React.createElement(ChevronLeft, { size: 20 })),
+                  
+                  React.createElement('div', {
+                    id: 'categories-container',
+                    className: 'flex gap-3 overflow-x-auto px-8 scroll-smooth hide-scrollbar'
+                  }, categories.map(category =>
+                    React.createElement('button', {
+                      key: category.id,
+                      onClick: () => setSelectedCategory(category.id),
+                      className: `flex-shrink-0 p-3 md:p-4 rounded-lg border-2 transition-all text-center min-w-[100px] md:min-w-[120px] ${
+                        selectedCategory === category.id
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-gray-200 hover:border-orange-300 text-gray-700'
+                      }`
+                    },
+                      React.createElement('div', { className: 'text-xl md:text-2xl mb-1 md:mb-2' }, category.icon),
+                      React.createElement('div', { className: 'font-medium text-xs whitespace-nowrap' }, category.name)
+                    )
+                  )),
+
+                  React.createElement('button', {
+                    onClick: () => scrollCategories('right'),
+                    className: 'absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50'
+                  }, React.createElement(ChevronRight, { size: 20 }))
+                )
+              )
+            ),
+
+            // Main Content
+            React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
+              React.createElement('div', { className: 'flex flex-col lg:flex-row gap-6' },
+                // Menu Items
+                React.createElement('div', { className: 'flex-1 min-w-0' },
+                  React.createElement('div', { className: 'mb-6' },
+                    React.createElement('h2', { className: 'text-xl md:text-2xl font-semibold text-gray-800 capitalize mb-2' },
+                      selectedCategory === 'all' ? 'All Items' : categories.find(c => c.id === selectedCategory)?.name
+                    ),
+                    React.createElement('p', { className: 'text-gray-600' }, `${getFilteredItems().length} items`)
+                  ),
+
+                  React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4' },
+                    getFilteredItems().map(item =>
+                      React.createElement('div', {
+                        key: item.id,
+                        className: 'bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-300'
+                      },
+                        React.createElement('div', { className: 'p-3 md:p-4' },
+                          React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                            React.createElement('h3', { className: 'font-semibold text-sm md:text-base text-gray-800 flex-1 pr-2 leading-tight' }, item.name),
+                            React.createElement('div', { className: 'flex gap-1 flex-shrink-0' },
+                              item.vegetarian && React.createElement('span', { className: 'bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded-full' }, '🌱'),
+                              item.spicy && React.createElement('span', { className: 'bg-red-100 text-red-800 text-xs px-1.5 py-0.5 rounded-full' }, '🌶️')
+                            )
+                          ),
+                          React.createElement('p', { className: 'text-gray-600 text-xs md:text-sm mb-3 leading-relaxed' }, item.description),
+                          React.createElement('div', { className: 'flex flex-col gap-2' },
+                            React.createElement('span', { className: 'text-lg md:text-xl font-bold text-orange-600' }, `$${item.price}`),
+                            React.createElement('button', {
+                              onClick: () => addToCart(item),
+                              disabled: buttonStates[item.id] === 'adding',
+                              className: `w-full px-3 py-2 rounded-lg transition-colors font-medium text-xs md:text-sm ${getButtonStyle(item)} disabled:opacity-70`
+                            }, getButtonText(item))
+                          )
+                        )
+                      )
+                    )
+                  )
+                ),
+
+                // Cart Sidebar
+                React.createElement('div', { className: 'w-full lg:w-80 lg:flex-shrink-0' },
+                  React.createElement('div', { className: 'bg-white rounded-lg shadow-sm border lg:sticky lg:top-6' },
+                    React.createElement('div', { className: 'p-4 border-b' },
+                      React.createElement('h3', { className: 'text-lg font-semibold' }, `Your Order (${getCartItemCount()})`)
+                    ),
+                    
+                    React.createElement('div', { className: 'p-4' },
+                      cart.length === 0 ? 
+                        React.createElement('p', { className: 'text-gray-600 text-center py-8 text-sm' }, 'Your cart is empty') :
+                        React.createElement(React.Fragment, null,
+                          React.createElement('div', { className: 'max-h-96 overflow-y-auto space-y-3 mb-4' },
+                            cart.map(item =>
+                              React.createElement('div', {
+                                key: item.id,
+                                className: 'flex items-center gap-3 p-3 bg-gray-50 rounded-lg'
+                              },
+                                React.createElement('div', { className: 'flex-1 min-w-0' },
+                                  React.createElement('h4', { className: 'font-medium text-sm truncate' }, item.name),
+                                  React.createElement('p', { className: 'text-gray-600 text-xs' }, `$${item.price} each`)
+                                ),
+                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                  React.createElement('button', {
+                                    onClick: () => updateQuantity(item.id, -1),
+                                    className: 'text-gray-500 hover:text-gray-700 p-1'
+                                  }, React.createElement(Minus, { size: 14 })),
+                                  React.createElement('span', { className: 'font-medium text-sm w-6 text-center' }, item.quantity),
+                                  React.createElement('button', {
+                                    onClick: () => updateQuantity(item.id, 1),
+                                    className: 'text-gray-500 hover:text-gray-700 p-1'
+                                  }, React.createElement(Plus, { size: 14 })),
+                                  React.createElement('button', {
+                                    onClick: () => removeFromCart(item.id),
+                                    className: 'text-red-500 hover:text-red-700 ml-2 p-1'
+                                  }, React.createElement(Trash2, { size: 14 }))
+                                ),
+                                React.createElement('div', { className: 'font-semibold text-sm' },
+                                  `$${(item.price * item.quantity).toFixed(2)}`
+                                )
+                              )
+                            )
+                          ),
+
+                          React.createElement('div', { className: 'border-t pt-4' },
+                            React.createElement('div', { className: 'flex justify-between items-center text-lg font-semibold mb-4' },
+                              React.createElement('span', null, 'Total:'),
+                              React.createElement('span', { className: 'text-orange-600' }, `$${getCartTotal().toFixed(2)}`)
+                            ),
+                            
+                            React.createElement('button', {
+                              onClick: () => setShowCheckout(true),
+                              className: 'w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors font-medium'
+                            }, 'Proceed to Checkout')
+                          )
+                        )
+                    )
+                  )
+                )
+              )
+            ),
+
+            // Checkout Modal
+            showCheckout && React.createElement(CheckoutForm, {
+              cart: cart,
+              total: getCartTotal(),
+              onClose: () => setShowCheckout(false),
+              onSubmit: handleCheckout
+            })
+          );
+        };
+
+        // Checkout Form Component
+        const CheckoutForm = ({ cart, total, onClose, onSubmit }) => {
+          const [formData, setFormData] = useState({
+            name: '',
+            phone: '',
+            email: '',
+            address: '',
+            specialInstructions: ''
+          });
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            if (formData.name && formData.phone) {
+              onSubmit(formData);
+            } else {
+              alert('Please fill in required fields');
+            }
+          };
+
+          return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50' },
+            React.createElement('div', { className: 'bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto' },
+              React.createElement('div', { className: 'p-4 border-b' },
+                React.createElement('div', { className: 'flex justify-between items-center' },
+                  React.createElement('h2', { className: 'text-xl font-semibold' }, 'Checkout'),
+                  React.createElement('button', {
+                    onClick: onClose,
+                    className: 'text-gray-500 hover:text-gray-700 text-2xl'
+                  }, '✕')
+                )
+              ),
+
+              React.createElement('form', { onSubmit: handleSubmit, className: 'p-4' },
+                React.createElement('div', { className: 'mb-4' },
+                  React.createElement('h3', { className: 'font-semibold mb-3' }, 'Order Summary'),
+                  React.createElement('div', { className: 'max-h-32 overflow-y-auto' },
+                    cart.map(item =>
+                      React.createElement('div', {
+                        key: item.id,
+                        className: 'flex justify-between text-sm py-1'
+                      },
+                        React.createElement('span', null, `${item.name} x${item.quantity}`),
+                        React.createElement('span', null, `${(item.price * item.quantity).toFixed(2)}`)
+                      )
+                    )
+                  ),
+                  React.createElement('div', { className: 'border-t mt-3 pt-3 flex justify-between font-semibold' },
+                    React.createElement('span', null, 'Total:'),
+                    React.createElement('span', { className: 'text-orange-600' }, `${total.toFixed(2)}`)
+                  )
+                ),
+
+                React.createElement('div', { className: 'space-y-4' },
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Name *'),
+                    React.createElement('input', {
+                      type: 'text',
+                      required: true,
+                      value: formData.name,
+                      onChange: (e) => setFormData({...formData, name: e.target.value}),
+                      className: 'w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500',
+                      placeholder: 'Your full name'
+                    })
+                  ),
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Phone *'),
+                    React.createElement('input', {
+                      type: 'tel',
+                      required: true,
+                      value: formData.phone,
+                      onChange: (e) => setFormData({...formData, phone: e.target.value}),
+                      className: 'w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500',
+                      placeholder: 'Your phone number'
+                    })
+                  ),
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Email'),
+                    React.createElement('input', {
+                      type: 'email',
+                      value: formData.email,
+                      onChange: (e) => setFormData({...formData, email: e.target.value}),
+                      className: 'w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500',
+                      placeholder: 'your@email.com'
+                    })
+                  ),
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Address'),
+                    React.createElement('input', {
+                      type: 'text',
+                      value: formData.address,
+                      onChange: (e) => setFormData({...formData, address: e.target.value}),
+                      className: 'w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500',
+                      placeholder: 'Delivery address'
+                    })
+                  ),
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Special Instructions'),
+                    React.createElement('textarea', {
+                      value: formData.specialInstructions,
+                      onChange: (e) => setFormData({...formData, specialInstructions: e.target.value}),
+                      className: 'w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500',
+                      rows: 3,
+                      placeholder: 'Any special requests...'
+                    })
+                  )
+                ),
+
+                React.createElement('div', { className: 'mt-6 flex gap-4' },
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: onClose,
+                    className: 'flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors'
+                  }, 'Back'),
+                  React.createElement('button', {
+                    type: 'submit',
+                    className: 'flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2'
+                  },
+                    React.createElement(Check, { size: 16 }),
+                    'Place Order'
+                  )
+                )
+              )
+            )
+          );
+        };
+
+        // Render the app
+        ReactDOM.render(React.createElement(RestaurantMenu), document.getElementById('root'));
+    </script>
+</body>
+</html>
