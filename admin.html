@@ -32,7 +32,7 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { getTenantInfo, CATEGORIES, formatCurrency, formatDate, EmptyState, LoadingSpinner, ErrorMessage, Icons } = window.MenuCraftUtils;
+        const { getTenantInfo, DEFAULT_CATEGORIES, formatCurrency, formatDate, EmptyState, LoadingSpinner, ErrorMessage, Icons } = window.MenuCraftUtils;
         const { MenuItemForm } = window.MenuCraftComponents;
 
         // Admin Panel Component
@@ -181,14 +181,22 @@
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
                                 }`
                             }, `Menu Items (${menuItems.length})`),
-                            React.createElement('button', {
-                                onClick: () => setActiveTab('orders'),
-                                className: `py-4 px-1 border-b-2 font-medium text-sm ${
-                                    activeTab === 'orders' 
-                                        ? 'border-orange-500 text-orange-600' 
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`
-                            }, `Recent Orders (${orders.length})`)
+                        React.createElement('button', {
+                            onClick: () => setActiveTab('orders'),
+                            className: `py-4 px-1 border-b-2 font-medium text-sm ${
+                                activeTab === 'orders' 
+                                    ? 'border-orange-500 text-orange-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`
+                        }, `Recent Orders (${orders.length})`),
+                        React.createElement('button', {
+                            onClick: () => setActiveTab('categories'),
+                            className: `py-4 px-1 border-b-2 font-medium text-sm ${
+                                activeTab === 'categories' 
+                                    ? 'border-orange-500 text-orange-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`
+                        }, 'Categories')
                         )
                     )
                 ),
@@ -256,7 +264,7 @@
                                                         React.createElement('td', { 
                                                             className: 'py-4 px-4 capitalize' 
                                                         }, 
-                                                            CATEGORIES.find(cat => cat.id === item.category)?.name || item.category
+                                                            DEFAULT_CATEGORIES.find(cat => cat.id === item.category)?.name || item.category
                                                         ),
                                                         React.createElement('td', { 
                                                             className: 'py-4 px-4 font-medium' 

@@ -35,7 +35,7 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { getTenantInfo, CATEGORIES, formatCurrency, EmptyState, LoadingSpinner, Icons } = window.MenuCraftUtils;
+        const { getTenantInfo, DEFAULT_CATEGORIES, formatCurrency, EmptyState, LoadingSpinner, Icons } = window.MenuCraftUtils;
         const { CheckoutForm, CartItem, MenuItemCard, CategoryNavigation } = window.MenuCraftComponents;
 
         // Customer Menu Component
@@ -49,6 +49,7 @@
             const [buttonStates, setButtonStates] = useState({});
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
+const [categories, setCategories] = useState(DEFAULT_CATEGORIES || []);
 
             // Initialize
             useEffect(() => {
@@ -192,8 +193,8 @@
                 ),
 
                 // Category Navigation
-                React.createElement(CategoryNavigation, {
-                    categories: CATEGORIES,
+               React.createElement(CategoryNavigation, {
+                    categories: categories,
                     selectedCategory,
                     onSelectCategory: setSelectedCategory
                 }),
@@ -208,7 +209,7 @@
                                     className: 'text-xl md:text-2xl font-semibold text-gray-800 capitalize mb-2' 
                                 },
                                     selectedCategory === 'all' ? 'All Items' : 
-                                    CATEGORIES.find(c => c.id === selectedCategory)?.name
+                                    categories.find(c => c.id === selectedCategory)?.name
                                 ),
                                 React.createElement('p', { className: 'text-gray-600' }, 
                                     `${getFilteredItems().length} items`
@@ -229,11 +230,11 @@
                             // Menu Items Grid
                             getFilteredItems().length === 0 ? 
                                 React.createElement(EmptyState, {
-                                    title: 'No Items Available',
-                                    message: selectedCategory === 'all' ? 
-                                        'This restaurant hasn\'t added any menu items yet. Try adding items from the admin panel.' :
-                                        `No items found in ${CATEGORIES.find(c => c.id === selectedCategory)?.name} category.`,
-                                    actionText: selectedCategory !== 'all' ? 'View All Items' : 'Go to Admin Panel',
+    title: 'No Items Available',
+    message: selectedCategory === 'all' ? 
+        'This restaurant hasn\'t added any menu items yet. Try adding items from the admin panel.' :
+        `No items found in ${categories.find(c => c.id === selectedCategory)?.name} category.`,
+    actionText: selectedCategory !== 'all' ? 'View All Items' : 'Go to Admin Panel',
                                     onAction: selectedCategory !== 'all' ? 
                                         () => setSelectedCategory('all') : 
                                         () => window.open('admin.html', '_blank')
