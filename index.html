@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bella Vista Restaurant Menu</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <title>Food Menu</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
     <style>
         .hide-scrollbar {
             -ms-overflow-style: none;
@@ -24,7 +23,14 @@
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { ChevronLeft, ChevronRight, Plus, Minus, Trash2, Check } = lucideReact;
+        
+        // Simple icon components
+        const ChevronLeft = ({ size = 20 }) => React.createElement('span', { style: { fontSize: size + 'px' } }, '‹');
+        const ChevronRight = ({ size = 20 }) => React.createElement('span', { style: { fontSize: size + 'px' } }, '›');
+        const Plus = ({ size = 16 }) => React.createElement('span', { style: { fontSize: size + 'px' } }, '+');
+        const Minus = ({ size = 16 }) => React.createElement('span', { style: { fontSize: size + 'px' } }, '−');
+        const Trash2 = ({ size = 16 }) => React.createElement('span', { style: { fontSize: size + 'px' } }, '🗑️');
+        const Check = ({ size = 16 }) => React.createElement('span', { style: { fontSize: size + 'px' } }, '✓');
 
         // Database simulation
         class RestaurantDB {
@@ -301,7 +307,7 @@
             React.createElement('div', { className: 'bg-white shadow-sm' },
               React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
                 React.createElement('div', { className: 'text-center' },
-                  React.createElement('h1', { className: 'text-4xl md:text-5xl font-bold text-gray-800 mb-3' }, 'Bella Vista'),
+                  React.createElement('h1', { className: 'text-4xl md:text-5xl font-bold text-gray-800 mb-3' }, 'Food Menu'),
                   React.createElement('div', { className: 'w-20 h-1 bg-orange-500 mx-auto mb-4' }),
                   React.createElement('p', { className: 'text-gray-600 max-w-2xl mx-auto text-sm md:text-base' },
                     'Experience culinary excellence with our carefully crafted menu featuring the finest ingredients and authentic flavors from around the world.'
@@ -499,7 +505,7 @@
                         className: 'flex justify-between text-sm py-1'
                       },
                         React.createElement('span', null, `${item.name} x${item.quantity}`),
-                        React.createElement('span', null, `${(item.price * item.quantity).toFixed(2)}`)
+                        React.createElement('span', null, `$${(item.price * item.quantity).toFixed(2)}`)
                       )
                     )
                   ),
