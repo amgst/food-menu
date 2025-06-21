@@ -54,10 +54,8 @@ const [categories, setCategories] = useState(DEFAULT_CATEGORIES || []);
             // Initialize
             useEffect(() => {
                 console.log('Initializing CustomerMenu...');
-                const tenant = getTenantInfo();
-                console.log('Tenant info:', tenant);
-                setTenantInfo(tenant);
-                setFirebaseService(new window.FirebaseService(tenant.tenantId));
+                const restaurant = getRestaurantInfo();
+                setFirebaseService(new window.FirebaseService());
             }, []);
 
             // Load menu items

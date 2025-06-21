@@ -8,7 +8,7 @@ if (typeof window.FirebaseService !== 'undefined') {
 // Firebase service layer
 class FirebaseService {
     constructor(tenantId) {
-        this.tenantId = tenantId;
+        
         this.db = window.db;
         this.auth = window.auth;
         this.storage = window.storage;
@@ -22,7 +22,7 @@ class FirebaseService {
      */
     async getCategories() {
         try {
-            const snapshot = await this.db.collection(`tenants/${this.tenantId}/categories`)
+            const snapshot = await this.db.collection('categories')
                 .orderBy('order', 'asc')
                 .get();
             
@@ -61,7 +61,7 @@ class FirebaseService {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            const docRef = await this.db.collection(`tenants/${this.tenantId}/categories`).add(categoryData);
+            const docRef = await this.db.collection('categories').add(categoryData);
             
             return {
                 id: docRef.id,
@@ -88,7 +88,7 @@ class FirebaseService {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            await this.db.collection(`tenants/${this.tenantId}/categories`).doc(id).update(updateData);
+            await this.db.collection('categories').doc(id).update(updateData);
         } catch (error) {
             console.error('Error updating category:', error);
             throw new Error('Failed to update category. Please try again.');
@@ -103,7 +103,7 @@ class FirebaseService {
     async deleteCategory(id) {
         try {
             // Check if any menu items use this category
-            const itemsSnapshot = await this.db.collection(`tenants/${this.tenantId}/menuItems`)
+            const itemsSnapshot = await this.db.collection(`menuItems`)
                 .where('category', '==', id)
                 .limit(1)
                 .get();
@@ -112,7 +112,7 @@ class FirebaseService {
                 throw new Error('Cannot delete category that contains menu items. Please move or delete items first.');
             }
 
-            await this.db.collection(`tenants/${this.tenantId}/categories`).doc(id).delete();
+            await this.db.collection('categories').doc(id).delete();
         } catch (error) {
             console.error('Error deleting category:', error);
             throw error;
@@ -129,7 +129,7 @@ class FirebaseService {
             const batch = this.db.batch();
 
             categoryIds.forEach((categoryId, index) => {
-                const categoryRef = this.db.collection(`tenants/${this.tenantId}/categories`).doc(categoryId);
+                const categoryRef = this.db.collection('categories').doc(categoryId);
                 batch.update(categoryRef, { 
                     order: index,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -162,7 +162,7 @@ class FirebaseService {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                const docRef = await this.db.collection(`tenants/${this.tenantId}/categories`).add(categoryData);
+                const docRef = await this.db.collection('categories').add(categoryData);
                 createdCategories.push({
                     id: docRef.id,
                     ...categoryData,
@@ -204,7 +204,7 @@ class FirebaseService {
      */
     async getMenuItems(category = null) {
         try {
-            let query = this.db.collection(`tenants/${this.tenantId}/menuItems`);
+            let query = this.db.collection(`menuItems`);
             
             if (category && category !== 'all') {
                 query = query.where('category', '==', category);
@@ -250,7 +250,7 @@ class FirebaseService {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            const docRef = await this.db.collection(`tenants/${this.tenantId}/menuItems`).add(itemData);
+            const docRef = await this.db.collection(`menuItems`).add(itemData);
             
             return {
                 id: docRef.id,
@@ -284,7 +284,7 @@ class FirebaseService {
                 }
             });
 
-            await this.db.collection(`tenants/${this.tenantId}/menuItems`).doc(id).update(updateData);
+            await this.db.collection(`menuItems`).doc(id).update(updateData);
         } catch (error) {
             console.error('Error updating menu item:', error);
             throw new Error('Failed to update menu item. Please try again.');
@@ -298,7 +298,7 @@ class FirebaseService {
      */
     async deleteMenuItem(id) {
         try {
-            await this.db.collection(`tenants/${this.tenantId}/menuItems`).doc(id).delete();
+            await this.db.collection(`menuItems`).doc(id).delete();
         } catch (error) {
             console.error('Error deleting menu item:', error);
             throw new Error('Failed to delete menu item. Please try again.');
@@ -355,7 +355,7 @@ class FirebaseService {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            const docRef = await this.db.collection(`tenants/${this.tenantId}/orders`).add(orderData);
+            const docRef = await this.db.collection(`orders`).add(orderData);
             
             return {
                 id: docRef.id,
@@ -377,7 +377,7 @@ class FirebaseService {
      */
     async getOrders(limit = 50, status = null) {
         try {
-            let query = this.db.collection(`tenants/${this.tenantId}/orders`);
+            let query = this.db.collection(`orders`);
             
             if (status) {
                 query = query.where('status', '==', status);
@@ -412,7 +412,7 @@ class FirebaseService {
                 throw new Error('Invalid order status');
             }
 
-            await this.db.collection(`tenants/${this.tenantId}/orders`).doc(id).update({
+            await this.db.collection(`orders`).doc(id).update({
                 status,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -489,7 +489,7 @@ class FirebaseService {
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - days);
 
-            const ordersSnapshot = await this.db.collection(`tenants/${this.tenantId}/orders`)
+            const ordersSnapshot = await this.db.collection(`orders`)
                 .where('createdAt', '>=', startDate)
                 .get();
 

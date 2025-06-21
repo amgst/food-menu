@@ -29,11 +29,13 @@
     <script src="js/utils.js"></script>
     <script src="js/firebase-service.js"></script>
     <script src="js/components/shared-components.js"></script>
+    <script src="js/components/category-management.js"></script>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
         const { getTenantInfo, DEFAULT_CATEGORIES, formatCurrency, formatDate, EmptyState, LoadingSpinner, ErrorMessage, Icons } = window.MenuCraftUtils;
         const { MenuItemForm } = window.MenuCraftComponents;
+        const CategoryManagement = window.CategoryManagement;
 
         // Admin Panel Component
         const AdminPanel = () => {
@@ -41,6 +43,7 @@
             const [firebaseService, setFirebaseService] = useState(null);
             const [menuItems, setMenuItems] = useState([]);
             const [orders, setOrders] = useState([]);
+            const [categories, setCategories] = useState([]);
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
             const [showAddForm, setShowAddForm] = useState(false);
@@ -65,12 +68,14 @@
                 try {
                     setLoading(true);
                     setError(null);
-                    const [itemsData, ordersData] = await Promise.all([
+                    const [itemsData, ordersData, categoriesData] = await Promise.all([
                         firebaseService.getMenuItems(),
-                        firebaseService.getOrders(20)
+                        firebaseService.getOrders(20),
+                        firebaseService.getCategories()
                     ]);
                     setMenuItems(itemsData);
                     setOrders(ordersData);
+                    setCategories(categoriesData);
                 } catch (error) {
                     console.error('Error loading data:', error);
                     setError('Failed to load data. Please try again.');
@@ -133,6 +138,10 @@
                 }
             };
 
+            const handleCategoriesChange = (newCategories) => {
+                setCategories(newCategories);
+            };
+
             if (loading) {
                 return React.createElement('div', { 
                     className: 'min-h-screen flex items-center justify-center bg-gray-100' 
@@ -181,22 +190,22 @@
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
                                 }`
                             }, `Menu Items (${menuItems.length})`),
-                        React.createElement('button', {
-                            onClick: () => setActiveTab('orders'),
-                            className: `py-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'orders' 
-                                    ? 'border-orange-500 text-orange-600' 
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`
-                        }, `Recent Orders (${orders.length})`),
-                        React.createElement('button', {
-                            onClick: () => setActiveTab('categories'),
-                            className: `py-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === 'categories' 
-                                    ? 'border-orange-500 text-orange-600' 
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`
-                        }, 'Categories')
+                            React.createElement('button', {
+                                onClick: () => setActiveTab('orders'),
+                                className: `py-4 px-1 border-b-2 font-medium text-sm ${
+                                    activeTab === 'orders' 
+                                        ? 'border-orange-500 text-orange-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`
+                            }, `Recent Orders (${orders.length})`),
+                            React.createElement('button', {
+                                onClick: () => setActiveTab('categories'),
+                                className: `py-4 px-1 border-b-2 font-medium text-sm ${
+                                    activeTab === 'categories' 
+                                        ? 'border-orange-500 text-orange-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`
+                            }, `Categories (${categories.length})`)
                         )
                     )
                 ),
@@ -264,7 +273,9 @@
                                                         React.createElement('td', { 
                                                             className: 'py-4 px-4 capitalize' 
                                                         }, 
-                                                            DEFAULT_CATEGORIES.find(cat => cat.id === item.category)?.name || item.category
+                                                            categories.find(cat => cat.id === item.category)?.name || 
+                                                            DEFAULT_CATEGORIES.find(cat => cat.id === item.category)?.name || 
+                                                            item.category
                                                         ),
                                                         React.createElement('td', { 
                                                             className: 'py-4 px-4 font-medium' 
@@ -301,6 +312,7 @@
                             )
                         ) :
 
+                        activeTab === 'orders' ?
                         // Orders Tab
                         React.createElement('div', { className: 'bg-white rounded-lg shadow-sm' },
                             React.createElement('div', { className: 'p-6' },
@@ -386,7 +398,30 @@
                                         )
                                     )
                             )
-                        )
+                        ) :
+
+                        activeTab === 'categories' ?
+                        // Categories Tab
+                        CategoryManagement ? React.createElement(CategoryManagement, {
+                            firebaseService: firebaseService,
+                            onCategoriesChange: handleCategoriesChange
+                        }) :
+                        React.createElement('div', { className: 'bg-white rounded-lg shadow-sm' },
+                            React.createElement('div', { className: 'p-6' },
+                                React.createElement('div', { className: 'text-center py-12' },
+                                    React.createElement('div', { className: 'text-6xl mb-4' }, '🏗️'),
+                                    React.createElement('h3', { className: 'text-xl font-semibold text-gray-800 mb-2' }, 'Categories Management'),
+                                    React.createElement('p', { className: 'text-gray-600 mb-6' }, 'Category management component not loaded. Please check category-management.js file.'),
+                                    React.createElement('a', {
+                                        href: 'https://console.firebase.google.com',
+                                        target: '_blank',
+                                        className: 'bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 inline-block'
+                                    }, 'Open Firebase Console')
+                                )
+                            )
+                        ) :
+
+                        null
                 ),
 
                 // Add/Edit Form Modal

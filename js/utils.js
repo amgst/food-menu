@@ -6,35 +6,11 @@ if (typeof window.MenuCraftUtils !== 'undefined') {
 } else {
 
 // Tenant detection utility
-const getTenantInfo = () => {
-    const hostname = window.location.hostname;
-    
-    if (hostname.includes('menucraft.co')) {
-        const subdomain = hostname.split('.')[0];
-        return {
-            tenantId: subdomain,
-            isCustomDomain: false,
-            tenantName: subdomain.charAt(0).toUpperCase() + subdomain.slice(1),
-            displayName: subdomain.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-        };
-    } else if (hostname.includes('localhost') || hostname.includes('netlify')) {
-        // Development/demo environment
-        return {
-            tenantId: 'demo-restaurant',
-            isCustomDomain: false,
-            tenantName: 'Demo Restaurant',
-            displayName: 'Demo Restaurant'
-        };
-    } else {
-        // Custom domain mapping
-        const tenantId = hostname.replace(/\./g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-        return {
-            tenantId: tenantId,
-            isCustomDomain: true,
-            tenantName: hostname,
-            displayName: hostname
-        };
-    }
+const getRestaurantInfo = () => {
+    return {
+        name: 'Demo Restaurant', // Change this for each client
+        displayName: 'Demo Restaurant'
+    };
 };
 
 // Simple icon components (React elements)
@@ -221,7 +197,7 @@ const getFromLocalStorage = (key, defaultValue = null) => {
 
 // Export utilities
 window.MenuCraftUtils = {
-    getTenantInfo,
+    getRestaurantInfo,
     Icons,
     formatCurrency,
     formatDate,
