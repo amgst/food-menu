@@ -1,4 +1,4 @@
-// Firebase Service Layer for MenuCraft
+// Firebase Service Layer for MenuCraft - No Tenant System
 
 // Prevent duplicate loading
 if (typeof window.FirebaseService !== 'undefined') {
@@ -7,8 +7,7 @@ if (typeof window.FirebaseService !== 'undefined') {
 
 // Firebase service layer
 class FirebaseService {
-    constructor(tenantId) {
-        
+    constructor() {
         this.db = window.db;
         this.auth = window.auth;
         this.storage = window.storage;
@@ -17,7 +16,7 @@ class FirebaseService {
     // ==================== CATEGORIES ====================
     
     /**
-     * Get categories for the tenant
+     * Get all categories
      * @returns {Promise<Array>} Array of categories
      */
     async getCategories() {
@@ -31,16 +30,10 @@ class FirebaseService {
                 ...doc.data()
             }));
             
-            // If no categories exist, create default ones
-            if (categories.length === 0) {
-                return await this.initializeDefaultCategories();
-            }
-            
             return categories;
         } catch (error) {
             console.error('Error fetching categories:', error);
-            // Return default categories as fallback
-            return this.getDefaultCategories();
+            return [];
         }
     }
 
@@ -103,7 +96,7 @@ class FirebaseService {
     async deleteCategory(id) {
         try {
             // Check if any menu items use this category
-            const itemsSnapshot = await this.db.collection(`menuItems`)
+            const itemsSnapshot = await this.db.collection('menuItems')
                 .where('category', '==', id)
                 .limit(1)
                 .get();
@@ -120,31 +113,7 @@ class FirebaseService {
     }
 
     /**
-     * Reorder categories
-     * @param {Array} categoryIds - Array of category IDs in new order
-     * @returns {Promise<void>}
-     */
-    async reorderCategories(categoryIds) {
-        try {
-            const batch = this.db.batch();
-
-            categoryIds.forEach((categoryId, index) => {
-                const categoryRef = this.db.collection('categories').doc(categoryId);
-                batch.update(categoryRef, { 
-                    order: index,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            });
-
-            await batch.commit();
-        } catch (error) {
-            console.error('Error reordering categories:', error);
-            throw new Error('Failed to reorder categories. Please try again.');
-        }
-    }
-
-    /**
-     * Initialize default categories for new tenants
+     * Initialize default categories
      * @returns {Promise<Array>} Array of created categories
      */
     async initializeDefaultCategories() {
@@ -184,27 +153,29 @@ class FirebaseService {
      */
     getDefaultCategories() {
         return [
-            { id: 'appetizers', name: 'Appetizers', icon: '🥗', color: '#10b981' },
-            { id: 'soups', name: 'Soups', icon: '🍲', color: '#f59e0b' },
-            { id: 'salads', name: 'Salads', icon: '🥙', color: '#22c55e' },
-            { id: 'pasta', name: 'Pasta', icon: '🍝', color: '#eab308' },
-            { id: 'pizza', name: 'Pizza', icon: '🍕', color: '#ef4444' },
-            { id: 'seafood', name: 'Seafood', icon: '🦞', color: '#3b82f6' },
-            { id: 'meat', name: 'Meat & Poultry', icon: '🥩', color: '#dc2626' },
-            { id: 'vegetarian', name: 'Vegetarian', icon: '🥕', color: '#16a34a' },
-            { id: 'desserts', name: 'Desserts', icon: '🍰', color: '#ec4899' },
-            { id: 'beverages', name: 'Beverages', icon: '🥤', color: '#06b6d4' }
+            { name: 'Appetizers', icon: '🥗', color: '#10b981' },
+            { name: 'Soups', icon: '🍲', color: '#f59e0b' },
+            { name: 'Salads', icon: '🥙', color: '#22c55e' },
+            { name: 'Pasta', icon: '🍝', color: '#eab308' },
+            { name: 'Pizza', icon: '🍕', color: '#ef4444' },
+            { name: 'Seafood', icon: '🦞', color: '#3b82f6' },
+            { name: 'Meat & Poultry', icon: '🥩', color: '#dc2626' },
+            { name: 'Vegetarian', icon: '🥕', color: '#16a34a' },
+            { name: 'Desserts', icon: '🍰', color: '#ec4899' },
+            { name: 'Beverages', icon: '🥤', color: '#06b6d4' }
         ];
     }
     
+    // ==================== MENU ITEMS ====================
+    
     /**
-     * Get all menu items for the tenant
+     * Get all menu items
      * @param {string|null} category - Filter by category
      * @returns {Promise<Array>} Array of menu items
      */
     async getMenuItems(category = null) {
         try {
-            let query = this.db.collection(`menuItems`);
+            let query = this.db.collection('menuItems');
             
             if (category && category !== 'all') {
                 query = query.where('category', '==', category);
@@ -250,7 +221,7 @@ class FirebaseService {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            const docRef = await this.db.collection(`menuItems`).add(itemData);
+            const docRef = await this.db.collection('menuItems').add(itemData);
             
             return {
                 id: docRef.id,
@@ -284,7 +255,7 @@ class FirebaseService {
                 }
             });
 
-            await this.db.collection(`menuItems`).doc(id).update(updateData);
+            await this.db.collection('menuItems').doc(id).update(updateData);
         } catch (error) {
             console.error('Error updating menu item:', error);
             throw new Error('Failed to update menu item. Please try again.');
@@ -298,7 +269,7 @@ class FirebaseService {
      */
     async deleteMenuItem(id) {
         try {
-            await this.db.collection(`menuItems`).doc(id).delete();
+            await this.db.collection('menuItems').doc(id).delete();
         } catch (error) {
             console.error('Error deleting menu item:', error);
             throw new Error('Failed to delete menu item. Please try again.');
@@ -355,7 +326,7 @@ class FirebaseService {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            const docRef = await this.db.collection(`orders`).add(orderData);
+            const docRef = await this.db.collection('orders').add(orderData);
             
             return {
                 id: docRef.id,
@@ -370,14 +341,14 @@ class FirebaseService {
     }
 
     /**
-     * Get orders for the tenant
+     * Get orders
      * @param {number} limit - Number of orders to fetch
      * @param {string} status - Filter by status
      * @returns {Promise<Array>} Array of orders
      */
     async getOrders(limit = 50, status = null) {
         try {
-            let query = this.db.collection(`orders`);
+            let query = this.db.collection('orders');
             
             if (status) {
                 query = query.where('status', '==', status);
@@ -412,7 +383,7 @@ class FirebaseService {
                 throw new Error('Invalid order status');
             }
 
-            await this.db.collection(`orders`).doc(id).update({
+            await this.db.collection('orders').doc(id).update({
                 status,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -422,30 +393,30 @@ class FirebaseService {
         }
     }
 
-    // ==================== TENANT SETTINGS ====================
+    // ==================== SETTINGS ====================
 
     /**
-     * Get tenant settings
-     * @returns {Promise<Object>} Tenant settings
+     * Get restaurant settings
+     * @returns {Promise<Object>} Settings
      */
-    async getTenantSettings() {
+    async getSettings() {
         try {
-            const doc = await this.db.collection('tenants').doc(this.tenantId).get();
+            const doc = await this.db.collection('settings').doc('restaurant').get();
             
             if (doc.exists) {
                 return doc.data();
             } else {
                 // Return default settings
                 return {
-                    name: this.tenantId,
+                    name: 'My Restaurant',
                     description: '',
                     address: '',
                     phone: '',
                     email: '',
                     logo: null,
                     theme: {
-                        primaryColor: '#f97316', // orange-500
-                        accentColor: '#ea580c'   // orange-600
+                        primaryColor: '#f97316',
+                        accentColor: '#ea580c'
                     },
                     currency: 'USD',
                     timezone: 'UTC',
@@ -453,26 +424,26 @@ class FirebaseService {
                 };
             }
         } catch (error) {
-            console.error('Error fetching tenant settings:', error);
+            console.error('Error fetching settings:', error);
             throw new Error('Failed to load restaurant settings.');
         }
     }
 
     /**
-     * Update tenant settings
+     * Update restaurant settings
      * @param {Object} settings - Settings to update
      * @returns {Promise<void>}
      */
-    async updateTenantSettings(settings) {
+    async updateSettings(settings) {
         try {
             const updateData = {
                 ...settings,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            await this.db.collection('tenants').doc(this.tenantId).set(updateData, { merge: true });
+            await this.db.collection('settings').doc('restaurant').set(updateData, { merge: true });
         } catch (error) {
-            console.error('Error updating tenant settings:', error);
+            console.error('Error updating settings:', error);
             throw new Error('Failed to update restaurant settings.');
         }
     }
@@ -480,7 +451,7 @@ class FirebaseService {
     // ==================== ANALYTICS ====================
 
     /**
-     * Get basic analytics for the tenant
+     * Get basic analytics
      * @param {number} days - Number of days to analyze
      * @returns {Promise<Object>} Analytics data
      */
@@ -489,7 +460,7 @@ class FirebaseService {
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - days);
 
-            const ordersSnapshot = await this.db.collection(`orders`)
+            const ordersSnapshot = await this.db.collection('orders')
                 .where('createdAt', '>=', startDate)
                 .get();
 
