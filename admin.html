@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f97316">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MenuCraft Admin">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjAiIGZpbGw9IiNmOTczMTYiLz4KPHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHg9IjUwIiB5PSI1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTMgN1YxN0gyMVY3SDNaTTE5IDlINVYxNUgxOVY5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTcgMTFIMTdWMTNIN1YxMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4K">
+
+
     <title>MenuCraft Admin - Dashboard</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -83,6 +92,129 @@
                     setLoading(false);
                 }
             };
+
+
+
+
+const PWANotifications = {
+  init() {
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered:', registration);
+          this.setupPushNotifications(registration);
+        })
+        .catch((error) => {
+          console.log('SW registration failed:', error);
+        });
+    }
+
+    // Show install prompt
+    this.showInstallPrompt();
+    
+    // Setup real-time order monitoring
+    this.setupOrderMonitoring();
+  },
+
+  async setupPushNotifications(registration) {
+    // Request notification permission
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('Notification permission granted');
+    }
+  },
+
+  showInstallPrompt() {
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Show custom install button
+      const installBtn = document.createElement('button');
+      installBtn.textContent = '📱 Install App';
+      installBtn.className = 'fixed bottom-20 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 z-50';
+      installBtn.onclick = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log('Install prompt outcome:', outcome);
+          deferredPrompt = null;
+          installBtn.remove();
+        }
+      };
+      document.body.appendChild(installBtn);
+      
+      // Auto-remove after 10 seconds
+      setTimeout(() => {
+        if (installBtn.parentNode) {
+          installBtn.remove();
+        }
+      }, 10000);
+    });
+  },
+
+  setupOrderMonitoring() {
+    if (!window.db) return;
+
+    // Listen for new orders
+    window.db.collection('orders')
+      .where('status', '==', 'pending')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const order = change.doc.data();
+            this.showOrderNotification(order);
+          }
+        });
+      });
+  },
+
+  showOrderNotification(order) {
+    // Browser notification
+    if (Notification.permission === 'granted') {
+      const notification = new Notification('🔔 New Order!', {
+        body: `From: ${order.customerInfo?.name}\nTotal: $${order.total}`,
+        icon: '/icon-192.png',
+        badge: '/badge-72.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: true,
+        actions: [
+          { action: 'view', title: 'View Order' },
+          { action: 'dismiss', title: 'Dismiss' }
+        ]
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        // Switch to orders tab if function exists
+        if (window.setActiveTab) {
+          window.setActiveTab('orders');
+        }
+        notification.close();
+      };
+    }
+
+    // Play notification sound
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSUGLIHO8diJOQgZZ7zs559NEAxPqOPwtmMcBjiS1/LNeSUGLIHO8tiJOQgZZ7vs559NEAxPp+PwtmMcBjmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559N');
+    audio.play().catch(() => {}); // Ignore if audio fails
+
+    // Visual indicator in title
+    const originalTitle = document.title;
+    document.title = '🔔 New Order! - MenuCraft Admin';
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 5000);
+  }
+};
+
+
+
+
+
 
             const handleAddItem = async (itemData) => {
                 try {
