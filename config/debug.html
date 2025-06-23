@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MenuCraft - Mobile Notification Debug</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f8fafc;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.info { background: #dbeafe; color: #1e40af; }
+        button {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { background: #ea580c; }
+        button:disabled { background: #d1d5db; cursor: not-allowed; }
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .feature-card.supported { border-color: #10b981; }
+        .feature-card.unsupported { border-color: #ef4444; }
+        h1, h2 { color: #1f2937; }
+        .device-info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 MenuCraft Mobile Debug Tool</h1>
+        <p>This tool helps diagnose notification issues on mobile devices.</p>
+        
+        <div id="device-info" class="device-info">
+            <h2>📱 Device Information</h2>
+            <div id="device-details"></div>
+        </div>
+
+        <div class="feature-grid">
+            <div id="sw-support" class="feature-card">
+                <h3>🔧 Service Worker</h3>
+                <div id="sw-status"></div>
+                <button onclick="testServiceWorker()">Test SW</button>
+            </div>
+
+            <div id="notification-support" class="feature-card">
+                <h3>🔔 Notifications</h3>
+                <div id="notification-status"></div>
+                <button onclick="requestNotificationPermission()">Request Permission</button>
+            </div>
+
+            <div id="push-support" class="feature-card">
+                <h3>📨 Push Messages</h3>
+                <div id="push-status"></div>
+                <button onclick="testPushSupport()">Test Push</button>
+            </div>
+
+            <div id="pwa-support" class="feature-card">
+                <h3>📱 PWA Features</h3>
+                <div id="pwa-status"></div>
+                <button onclick="testPWAFeatures()">Test PWA</button>
+            </div>
+        </div>
+
+        <div>
+            <h2>🧪 Test Actions</h2>
+            <button onclick="testBasicNotification()">Test Basic Notification</button>
+            <button onclick="testServiceWorkerNotification()">Test SW Notification</button>
+            <button onclick="testVibration()">Test Vibration</button>
+            <button onclick="testAudio()">Test Audio</button>
+            <button onclick="simulateOrder()">Simulate New Order</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div id="log" class="log"></div>
+
+        <div>
+            <h2>💡 Troubleshooting Tips</h2>
+            <ul>
+                <li><strong>iOS Safari:</strong> Notifications only work when app is installed to home screen</li>
+                <li><strong>Android Chrome:</strong> Ensure notifications are enabled in browser settings</li>
+                <li><strong>Samsung Internet:</strong> May require additional permissions</li>
+                <li><strong>Firefox Mobile:</strong> Limited notification support</li>
+                <li><strong>General:</strong> Try installing the app as PWA for better notification support</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced logging
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logElement.textContent += logEntry;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${type}]`, message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        // Device information
+        function displayDeviceInfo() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Language': navigator.language,
+                'Online': navigator.onLine,
+                'Screen': `${screen.width}x${screen.height}`,
+                'Viewport': `${window.innerWidth}x${window.innerHeight}`,
+                'Touch Support': 'ontouchstart' in window,
+                'Standalone Mode': window.matchMedia('(display-mode: standalone)').matches
+            };
+
+            const detailsElement = document.getElementById('device-details');
+            detailsElement.innerHTML = Object.entries(info)
+                .map(([key, value]) => `<strong>${key}:</strong> ${value}<br>`)
+                .join('');
+        }
+
+        // Feature detection
+        function checkFeatureSupport() {
+            // Service Worker
+            const swSupported = 'serviceWorker' in navigator;
+            updateFeatureCard('sw-support', swSupported, swSupported ? 'Supported' : 'Not Supported');
+
+            // Notifications
+            const notificationSupported = 'Notification' in window;
+            const permission = notificationSupported ? Notification.permission : 'unsupported';
+            updateFeatureCard('notification-support', notificationSupported, 
+                `${notificationSupported ? 'Supported' : 'Not Supported'} (${permission})`);
+
+            // Push
+            const pushSupported = 'PushManager' in window;
+            updateFeatureCard('push-support', pushSupported, pushSupported ? 'Supported' : 'Not Supported');
+
+            // PWA
+            const manifestSupported = 'serviceWorker' in navigator && window.matchMedia('(display-mode: standalone)').matches;
+            updateFeatureCard('pwa-support', manifestSupported, 
+                manifestSupported ? 'Installed as PWA' : 'Not installed as PWA');
+        }
+
+        function updateFeatureCard(id, supported, statusText) {
+            const card = document.getElementById(id);
+            const status = card.querySelector('div');
+            card.className = `feature-card ${supported ? 'supported' : 'unsupported'}`;
+            status.innerHTML = `<div class="status ${supported ? 'success' : 'error'}">${statusText}</div>`;
+        }
+
+        // Test functions
+        async function testServiceWorker() {
+            log('Testing Service Worker...');
+            
+            if (!('serviceWorker' in navigator)) {
+                log('Service Worker not supported', 'error');
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                log('Service Worker registered successfully', 'success');
+                log(`SW scope: ${registration.scope}`);
+                
+                await navigator.serviceWorker.ready;
+                log('Service Worker is ready', 'success');
+            } catch (error) {
+                log(`Service Worker registration failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function requestNotificationPermission() {
+            log('Requesting notification permission...');
+            
+            if (!('Notification' in window)) {
+                log('Notifications not supported', 'error');
+                return;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Notification permission: ${permission}`, permission === 'granted' ? 'success' : 'warning');
+                checkFeatureSupport(); // Update UI
+            } catch (error) {
+                log(`Permission request failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testBasicNotification() {
+            log('Testing basic notification...');
+            
+            if (Notification.permission !== 'granted') {
+                log('Notification permission not granted', 'warning');
+                return;
+            }
+
+            try {
+                const notification = new Notification('🧪 Test Notification', {
+                    body: 'This is a basic browser notification test.',
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iOCIgZmlsbD0iI2Y5NzMxNiIvPgo8cGF0aCBkPSJNMTIgMTZWMzJIMzZWMTZIMTJaTTMyIDE4SDE2VjMwSDMyVjE4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
+                    vibrate: [200, 100, 200],
+                    requireInteraction: false
+                });
+
+                notification.onclick = () => {
+                    log('Basic notification clicked', 'success');
+                    notification.close();
+                };
+
+                log('Basic notification sent', 'success');
+            } catch (error) {
+                log(`Basic notification failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testServiceWorkerNotification() {
+            log('Testing Service Worker notification...');
+            
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                if (!('showNotification' in registration)) {
+                    log('Service Worker notifications not supported', 'error');
+                    return;
+                }
+
+                await registration.showNotification('🔧 SW Test Notification', {
+                    body: 'This is a Service Worker notification test.',
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iOCIgZmlsbD0iI2Y5NzMxNiIvPgo8cGF0aCBkPSJNMTIgMTZWMzJIMzZWMTZIMTJaTTMyIDE4SDE2VjMwSDMyVjE4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
+                    badge: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iOCIgZmlsbD0iI2Y5NzMxNiIvPgo8cGF0aCBkPSJNMTIgMTZWMzJIMzZWMTZIMTJaTTMyIDE4SDE2VjMwSDMyVjE4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
+                    vibrate: [200, 100, 200, 100, 200],
+                    requireInteraction: true,
+                    actions: [
+                        { action: 'view', title: 'View' },
+                        { action: 'dismiss', title: 'Dismiss' }
+                    ],
+                    tag: 'sw-test'
+                });
+
+                log('Service Worker notification sent', 'success');
+            } catch (error) {
+                log(`Service Worker notification failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testVibration() {
+            log('Testing vibration...');
+            
+            if (!('vibrate' in navigator)) {
+                log('Vibration not supported', 'warning');
+                return;
+            }
+
+            try {
+                navigator.vibrate([200, 100, 200, 100, 200]);
+                log('Vibration triggered', 'success');
+            } catch (error) {
+                log(`Vibration failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testAudio() {
+            log('Testing audio notification...');
+            
+            try {
+                // Test Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                log('Web Audio API notification sound played', 'success');
+            } catch (error) {
+                log(`Web Audio API failed: ${error.message}`, 'warning');
+                
+                // Fallback to HTML5 Audio
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSUGLIHO8diJOQgZZ7zs559NEAxPqOPwtmMcBjiS1/LNeSUGLIHO8tiJOQgZZ7vs559NEAxPp+PwtmMcBjmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559N');
+                    audio.volume = 0.3;
+                    audio.play().then(() => {
+                        log('HTML5 Audio notification played', 'success');
+                    }).catch(() => {
+                        log('HTML5 Audio failed (requires user interaction)', 'warning');
+                    });
+                } catch (fallbackError) {
+                    log('All audio methods failed', 'error');
+                }
+            }
+        }
+
+        async function testPushSupport() {
+            log('Testing Push Manager support...');
+            
+            if (!('PushManager' in window)) {
+                log('Push Manager not supported', 'error');
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                if (!('pushManager' in registration)) {
+                    log('Push Manager not available in Service Worker', 'error');
+                    return;
+                }
+
+                // Check if already subscribed
+                const existingSubscription = await registration.pushManager.getSubscription();
+                if (existingSubscription) {
+                    log('Already subscribed to push notifications', 'success');
+                    log(`Endpoint: ${existingSubscription.endpoint.substring(0, 50)}...`);
+                } else {
+                    log('Not subscribed to push notifications', 'info');
+                }
+
+                log('Push Manager is available', 'success');
+            } catch (error) {
+                log(`Push Manager test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testPWAFeatures() {
+            log('Testing PWA features...');
+            
+            const features = {
+                'Standalone mode': window.matchMedia('(display-mode: standalone)').matches,
+                'Fullscreen mode': window.matchMedia('(display-mode: fullscreen)').matches,
+                'Minimal UI mode': window.matchMedia('(display-mode: minimal-ui)').matches,
+                'Before install prompt': 'onbeforeinstallprompt' in window,
+                'App installed': window.navigator.standalone === true,
+                'Share API': 'share' in navigator,
+                'Web App Manifest': document.querySelector('link[rel="manifest"]') !== null
+            };
+
+            Object.entries(features).forEach(([feature, supported]) => {
+                log(`${feature}: ${supported ? '✅' : '❌'}`, supported ? 'success' : 'info');
+            });
+        }
+
+        async function simulateOrder() {
+            log('Simulating new order notification...');
+            
+            const mockOrder = {
+                id: 'test-' + Date.now(),
+                customerInfo: {
+                    name: 'Test Customer',
+                    phone: '+1234567890'
+                },
+                items: [
+                    { name: 'Test Pizza', quantity: 1, price: 15.99 }
+                ],
+                total: 15.99,
+                status: 'pending',
+                createdAt: new Date()
+            };
+
+            // Test all notification methods
+            await testBasicNotification();
+            await testServiceWorkerNotification();
+            testVibration();
+            testAudio();
+            
+            // Show in-app alert
+            showMockInAppAlert(mockOrder);
+            
+            log('Order simulation complete', 'success');
+        }
+
+        function showMockInAppAlert(order) {
+            const alert = document.createElement('div');
+            alert.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #f97316;
+                    color: white;
+                    padding: 16px 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 9999;
+                    max-width: 320px;
+                    animation: slideIn 0.3s ease-out;
+                ">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 24px;">🔔</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; margin-bottom: 4px;">New Order!</div>
+                            <div style="font-size: 14px; opacity: 0.9;">
+                                ${order.customerInfo.name} • ${order.total}
+                            </div>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" style="
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 18px;
+                            cursor: pointer;
+                            opacity: 0.7;
+                        ">✕</button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                </style>
+            `;
+            
+            document.body.appendChild(alert);
+            log('In-app alert shown', 'success');
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.style.animation = 'slideIn 0.3s ease-out reverse';
+                    setTimeout(() => {
+                        if (alert.parentElement) {
+                            alert.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Mobile debug tool loaded', 'success');
+            displayDeviceInfo();
+            checkFeatureSupport();
+            
+            // Test Service Worker availability
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    log(`Found ${registrations.length} service worker registration(s)`, 'info');
+                });
+            }
+            
+            // Log initial state
+            log(`Notification permission: ${Notification.permission}`, 'info');
+            log(`Page visibility: ${document.visibilityState}`, 'info');
+            log(`Connection type: ${navigator.connection?.effectiveType || 'unknown'}`, 'info');
+        });
+
+        // Listen for visibility changes
+        document.addEventListener('visibilitychange', () => {
+            log(`Page visibility changed to: ${document.visibilityState}`, 'info');
+        });
+
+        // Listen for online/offline
+        window.addEventListener('online', () => log('Device came online', 'success'));
+        window.addEventListener('offline', () => log('Device went offline', 'warning'));
+
+        // Listen for installation events
+        window.addEventListener('beforeinstallprompt', (e) => {
+            log('Install prompt available', 'success');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            log('App was installed', 'success');
+        });
+    </script>
+</body>
+</html>
