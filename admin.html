@@ -46,6 +46,149 @@
         const { MenuItemForm } = window.MenuCraftComponents;
         const CategoryManagement = window.CategoryManagement;
 
+        // PWA Notification System
+        const PWANotifications = {
+            init() {
+                console.log('🔔 Initializing PWA notifications...');
+                
+                // Register service worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then((registration) => {
+                            console.log('✅ Service Worker registered:', registration);
+                            this.setupPushNotifications(registration);
+                        })
+                        .catch((error) => {
+                            console.error('❌ Service Worker registration failed:', error);
+                        });
+                }
+
+                // Show install prompt
+                this.showInstallPrompt();
+                
+                // Setup real-time order monitoring
+                this.setupOrderMonitoring();
+            },
+
+            async setupPushNotifications(registration) {
+                // Request notification permission
+                if (Notification.permission === 'default') {
+                    const permission = await Notification.requestPermission();
+                    console.log('📱 Notification permission:', permission);
+                }
+            },
+
+            showInstallPrompt() {
+                let deferredPrompt;
+                
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    
+                    // Show custom install button
+                    const installBtn = document.createElement('button');
+                    installBtn.textContent = '📱 Install App';
+                    installBtn.className = 'fixed bottom-20 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 z-50';
+                    installBtn.onclick = async () => {
+                        if (deferredPrompt) {
+                            deferredPrompt.prompt();
+                            const { outcome } = await deferredPrompt.userChoice;
+                            console.log('Install prompt outcome:', outcome);
+                            deferredPrompt = null;
+                            installBtn.remove();
+                        }
+                    };
+                    document.body.appendChild(installBtn);
+                    
+                    // Auto-remove after 10 seconds
+                    setTimeout(() => {
+                        if (installBtn.parentNode) {
+                            installBtn.remove();
+                        }
+                    }, 10000);
+                });
+            },
+
+            setupOrderMonitoring() {
+                console.log('🔍 Setting up order monitoring...');
+                
+                if (!window.db) {
+                    console.error('❌ Firebase not available');
+                    return;
+                }
+
+                // Listen for new orders in real-time
+                window.db.collection('orders')
+                    .where('status', '==', 'pending')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        console.log('📊 Order snapshot received, changes:', snapshot.docChanges().length);
+                        
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === 'added') {
+                                const order = change.doc.data();
+                                console.log('🆕 New order detected:', order);
+                                this.showOrderNotification(order);
+                            }
+                        });
+                    }, (error) => {
+                        console.error('❌ Order monitoring error:', error);
+                    });
+            },
+
+            showOrderNotification(order) {
+                console.log('🔔 Showing notification for order:', order);
+                
+                // Browser notification
+                if (Notification.permission === 'granted') {
+                    const notification = new Notification('🔔 New Order!', {
+                        body: `From: ${order.customerInfo?.name}\nTotal: $${order.total}`,
+                        icon: '/manifest.json',
+                        badge: '/manifest.json',
+                        vibrate: [200, 100, 200],
+                        requireInteraction: true,
+                        actions: [
+                            { action: 'view', title: 'View Order' },
+                            { action: 'dismiss', title: 'Dismiss' }
+                        ]
+                    });
+
+                    notification.onclick = () => {
+                        window.focus();
+                        // Switch to orders tab if function exists
+                        if (window.setActiveTab) {
+                            window.setActiveTab('orders');
+                        }
+                        notification.close();
+                    };
+                    
+                    console.log('📱 Browser notification shown');
+                } else {
+                    console.log('🚫 Notification permission not granted');
+                }
+
+                // Play notification sound
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSUGLIHO8diJOQgZZ7zs559NEAxPqOPwtmMcBjiS1/LNeSUGLIHO8tiJOQgZZ7vs559NEAxPp+PwtmMcBjmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559N');
+                    audio.play().catch(() => {
+                        console.log('🔇 Audio notification failed (normal on mobile)');
+                    });
+                    console.log('🔊 Audio notification played');
+                } catch (error) {
+                    console.log('🔇 Audio error:', error);
+                }
+
+                // Visual indicator in title
+                const originalTitle = document.title;
+                document.title = '🔔 New Order! - MenuCraft Admin';
+                setTimeout(() => {
+                    document.title = originalTitle;
+                }, 5000);
+                
+                console.log('✅ All notifications completed');
+            }
+        };
+
         // Admin Panel Component
         const AdminPanel = () => {
             const [restaurantInfo, setRestaurantInfo] = useState(null);
@@ -59,11 +202,17 @@
             const [editingItem, setEditingItem] = useState(null);
             const [activeTab, setActiveTab] = useState('menu');
 
+            // Make setActiveTab globally available for notifications
+            window.setActiveTab = setActiveTab;
+
             // Initialize
             useEffect(() => {
                 const restaurant = getRestaurantInfo();
                 setRestaurantInfo(restaurant);
                 setFirebaseService(new window.FirebaseService());
+                
+                // Initialize PWA notifications
+                PWANotifications.init();
             }, []);
 
             // Load data
@@ -92,129 +241,6 @@
                     setLoading(false);
                 }
             };
-
-
-
-
-const PWANotifications = {
-  init() {
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          console.log('SW registered:', registration);
-          this.setupPushNotifications(registration);
-        })
-        .catch((error) => {
-          console.log('SW registration failed:', error);
-        });
-    }
-
-    // Show install prompt
-    this.showInstallPrompt();
-    
-    // Setup real-time order monitoring
-    this.setupOrderMonitoring();
-  },
-
-  async setupPushNotifications(registration) {
-    // Request notification permission
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      console.log('Notification permission granted');
-    }
-  },
-
-  showInstallPrompt() {
-    let deferredPrompt;
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      
-      // Show custom install button
-      const installBtn = document.createElement('button');
-      installBtn.textContent = '📱 Install App';
-      installBtn.className = 'fixed bottom-20 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 z-50';
-      installBtn.onclick = async () => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          console.log('Install prompt outcome:', outcome);
-          deferredPrompt = null;
-          installBtn.remove();
-        }
-      };
-      document.body.appendChild(installBtn);
-      
-      // Auto-remove after 10 seconds
-      setTimeout(() => {
-        if (installBtn.parentNode) {
-          installBtn.remove();
-        }
-      }, 10000);
-    });
-  },
-
-  setupOrderMonitoring() {
-    if (!window.db) return;
-
-    // Listen for new orders
-    window.db.collection('orders')
-      .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
-      .onSnapshot((snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === 'added') {
-            const order = change.doc.data();
-            this.showOrderNotification(order);
-          }
-        });
-      });
-  },
-
-  showOrderNotification(order) {
-    // Browser notification
-    if (Notification.permission === 'granted') {
-      const notification = new Notification('🔔 New Order!', {
-        body: `From: ${order.customerInfo?.name}\nTotal: $${order.total}`,
-        icon: '/icon-192.png',
-        badge: '/badge-72.png',
-        vibrate: [200, 100, 200],
-        requireInteraction: true,
-        actions: [
-          { action: 'view', title: 'View Order' },
-          { action: 'dismiss', title: 'Dismiss' }
-        ]
-      });
-
-      notification.onclick = () => {
-        window.focus();
-        // Switch to orders tab if function exists
-        if (window.setActiveTab) {
-          window.setActiveTab('orders');
-        }
-        notification.close();
-      };
-    }
-
-    // Play notification sound
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSUGLIHO8diJOQgZZ7zs559NEAxPqOPwtmMcBjiS1/LNeSUGLIHO8tiJOQgZZ7vs559NEAxPp+PwtmMcBjmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559NEAxPp+PwtmMcBzmS1/LNeSUGLIHO8tiJOQgZZ7zs559N');
-    audio.play().catch(() => {}); // Ignore if audio fails
-
-    // Visual indicator in title
-    const originalTitle = document.title;
-    document.title = '🔔 New Order! - MenuCraft Admin';
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 5000);
-  }
-};
-
-
-
-
-
 
             const handleAddItem = async (itemData) => {
                 try {
@@ -294,6 +320,9 @@ const PWANotifications = {
                                 React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'MenuCraft Admin'),
                                 React.createElement('p', { className: 'text-gray-600' }, 
                                     `Managing: ${restaurantInfo?.displayName || 'Restaurant'}`
+                                ),
+                                React.createElement('p', { className: 'text-xs text-green-600 mt-1' }, 
+                                    `🔔 PWA Notifications: ${Notification.permission === 'granted' ? 'Enabled' : 'Disabled'}`
                                 )
                             ),
                             React.createElement('div', { className: 'flex gap-3' },
@@ -570,8 +599,15 @@ const PWANotifications = {
             );
         };
 
-        // Render the app
-        ReactDOM.render(React.createElement(AdminPanel), document.getElementById('root'));
+        // Use React 18 createRoot
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot ? ReactDOM.createRoot(container) : ReactDOM.render;
+        
+        if (ReactDOM.createRoot) {
+            root.render(React.createElement(AdminPanel));
+        } else {
+            root(React.createElement(AdminPanel), container);
+        }
     </script>
 </body>
 </html>
