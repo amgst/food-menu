@@ -1,18 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- Replace the <head> section in your admin.html with this improved version -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- PWA Manifest and Icons -->
     <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#f97316">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="MenuCraft Admin">
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjAiIGZpbGw9IiNmOTczMTYiLz4KPHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHg9IjUwIiB5PSI1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTMgN1YxN0gyMVY3SDNaTTE5IDlINVYxNUgxOVY5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTcgMTFIMTdWMTNIN1YxMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4K">
+    <meta name="theme-color" content="#f97316">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MenuCraft Admin">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjAiIGZpbGw9IiNmOTczMTYiLz4KPHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHg9IjUwIiB5PSI1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTMgN1YxN0gyMVY3SDNaTTE5IDlINVYxNUgxOVY5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTcgMTFIMTdWMTNIN1YxMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4K">
+    
+    <!-- Additional iOS sizes -->
+    <link rel="apple-touch-icon" sizes="57x57" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTciIGhlaWdodD0iNTciIHZpZXdCb3g9IjAgMCA1NyA1NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjU3IiBoZWlnaHQ9IjU3IiByeD0iOCIgZmlsbD0iI2Y5NzMxNiIvPgo8cGF0aCBkPSJNMTIgMTZWNDFINDVWMTZIMTJaTTQxIDE4SDE2VjM5SDQxVjE4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+">
+    <link rel="apple-touch-icon" sizes="72x72" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHZpZXdCb3g9IjAgMCA3MiA3MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjcyIiByeD0iMTIiIGZpbGw9IiNmOTczMTYiLz4KPHBhdGggZD0iTTE2IDIwVjUySDU2VjIwSDE2Wk01MiAyMkgyMFY1MEg1MlYyMloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=">
+    <link rel="apple-touch-icon" sizes="114x114" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTE0IiBoZWlnaHQ9IjExNCIgdmlld0JveD0iMCAwIDExNCAxMTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMTQiIGhlaWdodD0iMTE0IiByeD0iMTYiIGZpbGw9IiNmOTczMTYiLz4KPHBhdGggZD0iTTI0IDI4VjgySDkwVjI4SDI0Wk04NiAzMkgyOFY3OEg4NlYzMloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=">
+    <link rel="apple-touch-icon" sizes="144x144" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0IiBoZWlnaHQ9IjE0NCIgdmlld0JveD0iMCAwIDE0NCAxNDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMjAiIGZpbGw9IiNmOTczMTYiLz4KPHBhdGggZD0iTTMwIDM2VjEwOEgxMTRWMzZIMzBaTTExMCA0MEgzNFYxMDRIMTEwVjQwWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+">
 
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#f97316">
+    <meta name="msapplication-TileImage" content="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0IiBoZWlnaHQ9IjE0NCIgdmlld0JveD0iMCAwIDE0NCAxNDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMjAiIGZpbGw9IiNmOTczMTYiLz4KPHBhdGggZD0iTTMwIDM2VjEwOEgxMTRWMzZIMzBaTTExMCA0MEgzNFYxMDRIMTEwVjQwWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+">
+
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iI2Y5NzMxNiIvPgo8cGF0aCBkPSJNOCAxMFYyMkgyNFYxMEg4Wk0yMiAxMkgxMFYyMEgyMlYxMloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=">
+    
+    <!-- SEO and Social -->
+    <meta name="description" content="MenuCraft Admin - Real-time restaurant order management with instant notifications">
+    <meta name="keywords" content="restaurant, menu, orders, management, PWA, notifications">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="MenuCraft Admin">
+    <meta property="og:description" content="Real-time restaurant order management">
+    <meta property="og:type" content="website">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
     <title>MenuCraft Admin - Dashboard</title>
+    
+    <!-- React and dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -23,10 +53,29 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
     <style>
+        /* Loading animation */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* PWA install prompt animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .install-prompt {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        /* Enhanced mobile responsive */
+        @media (max-width: 768px) {
+            .mobile-hidden { display: none !important; }
         }
     </style>
 </head>
@@ -609,5 +658,228 @@
             root(React.createElement(AdminPanel), container);
         }
     </script>
+
+
+
+
+
+
+
+<script>
+// Enhanced PWA Installation Handler
+class PWAInstaller {
+    constructor() {
+        this.deferredPrompt = null;
+        this.isInstalled = false;
+        this.init();
+    }
+
+    init() {
+        this.checkInstallStatus();
+        this.setupInstallPrompt();
+        this.addInstallButton();
+    }
+
+    checkInstallStatus() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isIOSStandalone = window.navigator.standalone === true;
+        this.isInstalled = isStandalone || isIOSStandalone;
+        
+        if (!this.isInstalled) {
+            console.warn('⚠️ App not installed as PWA - notifications may not work properly');
+            this.showInstallReminder();
+        } else {
+            console.log('✅ App is installed as PWA');
+        }
+    }
+
+    setupInstallPrompt() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 PWA install prompt available');
+            e.preventDefault();
+            this.deferredPrompt = e;
+            this.showInstallBanner();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed successfully');
+            this.isInstalled = true;
+            this.hideInstallBanner();
+        });
+    }
+
+    showInstallBanner() {
+        if (document.getElementById('pwa-install-banner')) return;
+
+        const banner = document.createElement('div');
+        banner.id = 'pwa-install-banner';
+        banner.innerHTML = `
+            <div style="
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #f97316, #ea580c);
+                color: white;
+                padding: 16px 20px;
+                box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideUp 0.3s ease-out;
+            ">
+                <div style="max-width: 600px; margin: 0 auto; display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 28px;">📱</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; margin-bottom: 4px;">Install MenuCraft</div>
+                        <div style="font-size: 14px; opacity: 0.9;">Get instant notifications for new orders</div>
+                    </div>
+                    <button id="install-now-btn" style="
+                        background: white;
+                        color: #f97316;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        margin-right: 10px;
+                    ">Install</button>
+                    <button id="install-dismiss-btn" style="
+                        background: none;
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.5);
+                        padding: 10px 16px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                    ">Later</button>
+                </div>
+            </div>
+            <style>
+                @keyframes slideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+            </style>
+        `;
+
+        document.body.appendChild(banner);
+
+        // Handle install button
+        document.getElementById('install-now-btn').onclick = () => {
+            this.installPWA();
+        };
+
+        // Handle dismiss button
+        document.getElementById('install-dismiss-btn').onclick = () => {
+            this.hideInstallBanner();
+        };
+    }
+
+    async installPWA() {
+        if (this.deferredPrompt) {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+            console.log('Install prompt outcome:', outcome);
+            
+            if (outcome === 'accepted') {
+                this.hideInstallBanner();
+            }
+            this.deferredPrompt = null;
+        } else {
+            // Show manual installation guide
+            window.open('/install.html', '_blank');
+        }
+    }
+
+    hideInstallBanner() {
+        const banner = document.getElementById('pwa-install-banner');
+        if (banner) {
+            banner.style.animation = 'slideUp 0.3s ease-out reverse';
+            setTimeout(() => banner.remove(), 300);
+        }
+    }
+
+    showInstallReminder() {
+        if (this.isInstalled) return;
+
+        // Show a subtle reminder after 10 seconds
+        setTimeout(() => {
+            if (!this.isInstalled && !document.getElementById('pwa-install-banner')) {
+                const reminder = document.createElement('div');
+                reminder.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #fef3c7;
+                        color: #92400e;
+                        padding: 12px 16px;
+                        border-radius: 8px;
+                        border-left: 4px solid #f59e0b;
+                        max-width: 300px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                        z-index: 999;
+                        animation: slideIn 0.3s ease-out;
+                    ">
+                        <div style="font-weight: bold; margin-bottom: 4px;">💡 Pro Tip</div>
+                        <div style="font-size: 13px; line-height: 1.4;">
+                            Install this app for reliable notifications! 
+                            <a href="/install.html" target="_blank" style="color: #92400e; text-decoration: underline;">Learn how</a>
+                        </div>
+                        <button onclick="this.parentElement.remove()" style="
+                            position: absolute;
+                            top: 8px;
+                            right: 8px;
+                            background: none;
+                            border: none;
+                            color: #92400e;
+                            cursor: pointer;
+                            font-size: 16px;
+                        ">×</button>
+                    </div>
+                    <style>
+                        @keyframes slideIn {
+                            from { transform: translateX(100%); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                    </style>
+                `;
+                document.body.appendChild(reminder);
+
+                // Auto remove after 15 seconds
+                setTimeout(() => {
+                    if (reminder.parentElement) {
+                        reminder.remove();
+                    }
+                }, 15000);
+            }
+        }, 10000);
+    }
+
+    addInstallButton() {
+        // Add install button to header if not installed
+        setTimeout(() => {
+            if (!this.isInstalled) {
+                const header = document.querySelector('.max-w-7xl .flex.gap-3');
+                if (header && !document.getElementById('header-install-btn')) {
+                    const installBtn = document.createElement('button');
+                    installBtn.id = 'header-install-btn';
+                    installBtn.innerHTML = '📱 Install App';
+                    installBtn.className = 'bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm mobile-hidden';
+                    installBtn.onclick = () => this.installPWA();
+                    header.appendChild(installBtn);
+                }
+            }
+        }, 1000);
+    }
+}
+
+// Initialize PWA installer when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        new PWAInstaller();
+    });
+} else {
+    new PWAInstaller();
+}
+</script>
 </body>
 </html>
