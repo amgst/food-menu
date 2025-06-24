@@ -5,12 +5,21 @@ if (typeof window.MenuCraftUtils !== 'undefined') {
     console.log('MenuCraftUtils already loaded, skipping...');
 } else {
 
-// Tenant detection utility - Fixed function name
+// Restaurant info - Updated for Pameer Restaurant
 const getTenantInfo = () => {
     return {
-        tenantId: 'demo-restaurant',
-        name: 'Demo Restaurant',
-        displayName: 'Demo Restaurant'
+        tenantId: 'pameer-restaurant',
+        name: 'Pameer Restaurant',
+        displayName: 'Pameer Restaurant',
+        description: 'Authentic Afghan Cuisine in Blacktown',
+        address: '110 Main Street Blacktown NSW 2148',
+        phone: '0451 130 729',
+        alternatePhone: '0404 777 738',
+        website: 'www.pameerresturant.com',
+        instagram: 'www.instagram.com/pameerrestaurant1/',
+        facebook: 'www.facebook.com/Pameerrestaurant/',
+        isHalal: true,
+        cateringAvailable: true
     };
 };
 
@@ -86,15 +95,13 @@ const formatDate = (date) => {
 // Category definitions - now dynamic, loaded from Firebase
 const DEFAULT_CATEGORIES = [
     { id: 'all', name: 'All Items', icon: '🍽️' },
-    { id: 'appetizers', name: 'Appetizers', icon: '🥗' },
-    { id: 'soups', name: 'Soups', icon: '🍲' },
-    { id: 'salads', name: 'Salads', icon: '🥙' },
-    { id: 'pasta', name: 'Pasta', icon: '🍝' },
-    { id: 'pizza', name: 'Pizza', icon: '🍕' },
-    { id: 'seafood', name: 'Seafood', icon: '🦞' },
-    { id: 'meat', name: 'Meat & Poultry', icon: '🥩' },
-    { id: 'vegetarian', name: 'Vegetarian', icon: '🥕' },
-    { id: 'desserts', name: 'Desserts', icon: '🍰' },
+    { id: 'family-packs', name: 'Family Packs', icon: '👨‍👩‍👧‍👦' },
+    { id: 'kebabs', name: 'Kebabs', icon: '🍢' },
+    { id: 'kebabs-with-rice', name: 'Kebabs with Rice', icon: '🍚' },
+    { id: 'rice-meals', name: 'Rice Meals', icon: '🍛' },
+    { id: 'curries', name: 'Curries', icon: '🍲' },
+    { id: 'specialties', name: 'Specialties', icon: '⭐' },
+    { id: 'sides-salads', name: 'Sides & Salads', icon: '🥗' },
     { id: 'beverages', name: 'Beverages', icon: '🥤' }
 ];
 
