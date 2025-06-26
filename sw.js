@@ -105,6 +105,9 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+
+
+
 // Enhanced notification handling
 self.addEventListener('notificationclick', (event) => {
   console.log('🔔 Notification clicked:', event.action, event.notification.data);
@@ -112,25 +115,25 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const action = event.action;
-  const data = event.notification.data || {};
   
   if (action === 'view' || !action) {
-    // Open or focus the admin page
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then((clientList) => {
-          // Check if admin page is already open
+          // Focus any existing admin page
           for (const client of clientList) {
             if (client.url.includes('/admin.html') && 'focus' in client) {
-              console.log('📱 Focusing existing admin window');
+              console.log('📱 Focusing existing admin page');
+              // Switch to orders tab via postMessage
+              client.postMessage({ type: 'SWITCH_TAB', tab: 'orders' });
               return client.focus();
             }
           }
           
-          // Open new window if none found
-          if (clients.openWindow) {
-            console.log('📱 Opening new admin window');
-            return clients.openWindow('/admin.html#orders');
+          // If no admin page open, focus any available window
+          if (clientList.length > 0) {
+            console.log('📱 Focusing available window');
+            return clientList[0].focus();
           }
         })
         .catch((error) => {
@@ -139,6 +142,8 @@ self.addEventListener('notificationclick', (event) => {
     );
   }
 });
+
+
 
 // Handle notification close
 self.addEventListener('notificationclose', (event) => {

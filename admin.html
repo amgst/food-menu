@@ -253,7 +253,13 @@
 
             // Make setActiveTab globally available for notifications
             window.setActiveTab = setActiveTab;
-
+navigator.serviceWorker.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SWITCH_TAB') {
+    if (window.setActiveTab) {
+      window.setActiveTab(event.data.tab);
+    }
+  }
+});
             // Initialize
             useEffect(() => {
                 const restaurant = getRestaurantInfo();
