@@ -399,6 +399,26 @@ class FirebaseService {
      * Get restaurant settings
      * @returns {Promise<Object>} Settings
      */
+
+
+async getUserByPhone(phone) {
+    try {
+        const snapshot = await this.db.collection('users')
+            .where('phone', '==', phone)
+            .limit(1)
+            .get();
+        
+        if (!snapshot.empty) {
+            return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching user by phone:', error);
+        return null;
+    }
+}
+
+    
     async getSettings() {
         try {
             const doc = await this.db.collection('settings').doc('restaurant').get();

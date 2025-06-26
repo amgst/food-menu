@@ -47,6 +47,7 @@
     <script src="js/utils.js?v=2"></script>
     <script src="js/firebase-service.js?v=2"></script>
     <script src="js/components/shared-components.js?v=2"></script>
+    <script src="js/components/two-step-checkout.js?v=2"></script>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -58,7 +59,7 @@
             const [tenantInfo, setTenantInfo] = useState(null);
             const [firebaseService, setFirebaseService] = useState(null);
             const [selectedCategory, setSelectedCategory] = useState('all');
-            
+
             const [cart, setCart] = useState(() => {
                     const saved = localStorage.getItem('menucraft-cart');
                     return saved ? JSON.parse(saved) : [];
@@ -375,12 +376,12 @@ Thank you for your order! 🍽️`);
 
 
                 // Checkout Modal
-                showCheckout && React.createElement(CheckoutForm, {
-                    cart: cart,
-                    total: getCartTotal(),
-                    onClose: () => setShowCheckout(false),
-                    onSubmit: handleCheckout
-                })
+showCheckout && React.createElement(TwoStepCheckout, {
+    cart: cart,
+    total: getCartTotal(),
+    onClose: () => setShowCheckout(false),
+    onSubmit: handleCheckout
+})
             );
         };
 
